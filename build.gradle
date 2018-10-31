@@ -1,0 +1,97 @@
+/*
+ * Copyright 2018 Wooga GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+plugins {
+    id 'java-library'
+    id 'groovy'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.8.4'
+    id 'nebula.release' version '6.3.5'
+}
+
+group "net.wooga"
+
+configurations {
+    rustLib {
+        transitive = false
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    rustLib project('rust')
+
+    testCompile "org.codehaus.groovy:groovy-all:2.4.15"
+    testCompile "org.spockframework:spock-core:1.2-groovy-2.4"
+}
+
+task collectLibs() {
+    dependsOn configurations.rustLib
+
+    doLast {
+        configurations.rustLib.resolve().each { artifact ->
+            copy {
+                from { artifact }
+                into file("${buildDir}/rustLibs/native")
+            }
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-h", file("${buildDir}/headers")]
+}
+
+sourceSets.main.resources {
+    srcDir(file("${buildDir}/rustLibs"))
+}
+
+processResources.dependsOn(collectLibs)
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publish = true
+    publications = ['Bintray']
+    pkg {
+        repo = 'maven'
+        name = project.name
+        userOrg = 'wooga'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/wooga/unity-version-manager-jni.git'
+        labels = ['unity', 'jni', 'unity version manager']
+        version {
+            name = project.version.toString()
+            vcsTag = project.version.toString()
+            released = new Date()
+        }
+    }
+}
+
+publishing {
+    publications {
+        Bintray(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+[finalSetup, candidateSetup, snapshotSetup].each { it.dependsOn(build)}
