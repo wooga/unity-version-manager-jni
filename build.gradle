@@ -67,8 +67,8 @@ sourceSets.main.resources {
 processResources.dependsOn(collectLibs)
 
 bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    user = project.hasProperty('bintrayUser') ? project.property('bintray.user') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintray.key') : System.getenv('BINTRAY_API_KEY')
     publish = true
     publications = ['Bintray']
     pkg {
