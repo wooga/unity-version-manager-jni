@@ -428,7 +428,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "uvm_core"
 version = "0.0.1"
-source = "git+https://github.com/Larusso/unity-version-manager.git?branch=feature/unity-hub-support#9e5cbf6e77b1d6cf89d6a58b7af83949dfdaa67f"
+source = "git+https://github.com/Larusso/unity-version-manager.git?rev=6d455844c97305dabecd02ccc18b771a77227635#6d455844c97305dabecd02ccc18b771a77227635"
 dependencies = [
  "dirs 1.0.4 (git+https://github.com/Larusso/dirs-rs.git)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -442,12 +442,12 @@ dependencies = [
 
 [[package]]
 name = "uvm_jni"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jni 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "uvm_core 0.0.1 (git+https://github.com/Larusso/unity-version-manager.git?branch=feature/unity-hub-support)",
+ "uvm_core 0.0.1 (git+https://github.com/Larusso/unity-version-manager.git?rev=6d455844c97305dabecd02ccc18b771a77227635)",
 ]
 
 [[package]]
@@ -562,7 +562,7 @@ dependencies = [
 "checksum unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc72304796d0818e357ead4e000d19c9c174ab23dc11093ac919054d20a6a7fc"
 "checksum unreachable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "382810877fe448991dfc7f0dd6e3ae5d58088fd0ea5e35189655f84e6814fa56"
 "checksum utf8-ranges 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "796f7e48bef87609f7ade7e06495a87d5cd06c7866e6a5cbfceffc558a243737"
-"checksum uvm_core 0.0.1 (git+https://github.com/Larusso/unity-version-manager.git?branch=feature/unity-hub-support)" = "<none>"
+"checksum uvm_core 0.0.1 (git+https://github.com/Larusso/unity-version-manager.git?rev=6d455844c97305dabecd02ccc18b771a77227635)" = "<none>"
 "checksum version_check 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "914b1a6776c4c929a602fafd8bc742e06365d4bcbe48c30f9cca5824f70dc9dd"
 "checksum void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 "checksum walkdir 2.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0ffb549f212c31e19f3667c55a7f515b983a84aef10fd0a4d1f9c125425115f3"
