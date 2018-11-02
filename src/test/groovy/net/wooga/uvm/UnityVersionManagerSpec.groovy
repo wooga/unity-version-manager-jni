@@ -50,7 +50,15 @@ class UnityVersionManagerSpec extends Specification {
 
     def "can call :installUnityEditor on UnityVersionManager"() {
         when:
-        UnityVersionManager.installUnityEditor(null, null)
+        UnityVersionManager.installUnityEditor("")
+        then:
+        noExceptionThrown()
+        when:
+        UnityVersionManager.installUnityEditor("", new File(""))
+        then:
+        noExceptionThrown()
+        when:
+        UnityVersionManager.installUnityEditor("", [] as Component[])
         then:
         noExceptionThrown()
         when:
@@ -65,7 +73,7 @@ class UnityVersionManagerSpec extends Specification {
         UnityVersionManager.uvmVersion() == expectedVersion
 
         where:
-        expectedVersion = "0.0.1"
+        expectedVersion = "0.1.0"
     }
 
     File mockUnityProject(String editorVersion) {
@@ -161,6 +169,24 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
+    def "installUnityEditor installs unity to default location"() {
+        given: "a version to install"
+        def version = "2017.1.0f1"
+        assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        when:
+        def result = UnityVersionManager.installUnityEditor(version)
+
+        then:
+        result != null
+        result.location.exists()
+        result.version == version
+        UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        cleanup:
+        result.location.deleteDir()
+    }
+
     def "installUnityEditor installs unity and components to location"() {
         given: "a version to install"
         def version = "2017.1.0f1"
@@ -191,5 +217,27 @@ class UnityVersionManagerSpec extends Specification {
 
         cleanup:
         destination.deleteDir()
+    }
+
+    def "installUnityEditor installs unity and components to default location"() {
+        given: "a version to install"
+        def version = "2017.1.0f1"
+        assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        when:
+        def result = UnityVersionManager.installUnityEditor(version, [Component.android, Component.ios].toArray() as Component[])
+
+        then:
+        result != null
+        result.location.exists()
+        result.version == version
+        UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+        def playbackEngines = new File(result.location, "PlaybackEngines")
+        playbackEngines.exists()
+        new File(playbackEngines, "iOSSupport").exists()
+        new File(playbackEngines, "AndroidPlayer").exists()
+
+        cleanup:
+        result.location.deleteDir()
     }
 }
