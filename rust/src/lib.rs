@@ -6,24 +6,23 @@ extern crate error_chain;
 #[macro_use]
 extern crate log;
 
-
 mod install;
 
-use uvm_core::Version;
+use jni::objects::{JClass, JObject, JString, JValue};
+use jni::sys::{jint, jobject, jobjectArray, jsize, jstring};
 use jni::JNIEnv;
-use jni::objects::{JClass, JObject, JValue, JString};
-use jni::sys::{jstring, jobject, jobjectArray, jsize, jboolean, jint};
+use std::collections::HashSet;
+use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::collections::HashSet;
 use uvm_core::install::InstallVariant;
-use std::error::Error;
 use uvm_core::unity::Component;
+use uvm_core::Version;
 
 mod error {
     use jni;
-    use uvm_core;
     use std;
+    use uvm_core;
 
     error_chain! {
         types {
@@ -31,13 +30,13 @@ mod error {
         }
 
         links {
-            Another(jni::errors::Error, jni::errors::ErrorKind) #[cfg(unix)];
+            Another(jni::errors::Error, jni::errors::ErrorKind);
         }
 
         foreign_links {
             Uvm(uvm_core::error::UvmError);
             ParseVersionError(uvm_core::unity::ParseVersionError);
-            Io(std::io::Error) #[cfg(unix)];
+            Io(std::io::Error);
         }
     }
 }
@@ -55,39 +54,64 @@ mod jni_utils {
             .map_err(|e| e.into())
     }
 
-    pub fn get_file<'a, 'b>(env: &'a JNIEnv<'b>, path: &'b Path) -> error::UvmJniResult<JObject<'b>> {
+    pub fn get_file<'a, 'b>(
+        env: &'a JNIEnv<'b>,
+        path: &'b Path,
+    ) -> error::UvmJniResult<JObject<'b>> {
         let class = env.find_class("java/io/File")?;
         let path_string = env.new_string(path.to_string_lossy())?;
-        let object = env.new_object(class, "(Ljava/lang/String;)V", &[JValue::Object(path_string.into())])?;
+        let object = env.new_object(
+            class,
+            "(Ljava/lang/String;)V",
+            &[JValue::Object(path_string.into())],
+        )?;
         Ok(object)
     }
 
-    pub fn get_installation<'a, 'b>(env: &'a JNIEnv<'b>, installation: &'b unity::Installation) -> error::UvmJniResult<JObject<'b>> {
+    pub fn get_installation<'a, 'b>(
+        env: &'a JNIEnv<'b>,
+        installation: &'b unity::Installation,
+    ) -> error::UvmJniResult<JObject<'b>> {
         let installation_class = env.find_class("net/wooga/uvm/Installation")?;
         let install_path = jni_utils::get_file(&env, installation.path())?;
         let install_version = env.new_string(installation.version().to_string())?;
-        let native_installation = env.new_object(installation_class, "(Ljava/io/File;Ljava/lang/String;)V", &[JValue::Object(install_path.into()), JValue::Object(install_version.into())])?;
+        let native_installation = env.new_object(
+            installation_class,
+            "(Ljava/io/File;Ljava/lang/String;)V",
+            &[
+                JValue::Object(install_path),
+                JValue::Object(install_version.into()),
+            ],
+        )?;
         Ok(native_installation)
     }
 
-    pub fn get_component<'a, 'b>(env: &'a JNIEnv<'b>, component: &'b Component) -> error::UvmJniResult<JObject<'a>> {
+    pub fn get_component<'a, 'b>(
+        env: &'a JNIEnv<'b>,
+        component: Component,
+    ) -> error::UvmJniResult<JObject<'a>> {
         let component_class = env.find_class("net/wooga/uvm/Component")?;
         let component_method = match component {
-            &Component::Android => "android",
-            &Component::Ios => "ios",
-            &Component::TvOs => "tvOs",
-            &Component::WebGl => "webGl",
-            &Component::Linux => "linux",
-            &Component::Windows => "windows",
-            &Component::WindowsMono => "windowsMono",
-            &Component::Editor => "editor",
-            &Component::Mono => "mono",
-            &Component::VisualStudio => "visualStudio",
-            &Component::MonoDevelop => "monoDevelop",
-            &Component::StandardAssets => "standardAssets",
-            &Component::Documentation => "documentation",
+            Component::Android => "android",
+            Component::Ios => "ios",
+            Component::TvOs => "tvOs",
+            Component::WebGl => "webGl",
+            Component::Linux => "linux",
+            Component::Windows => "windows",
+            Component::WindowsMono => "windowsMono",
+            Component::Editor => "editor",
+            Component::Mono => "mono",
+            Component::VisualStudio => "visualStudio",
+            Component::MonoDevelop => "monoDevelop",
+            Component::StandardAssets => "standardAssets",
+            Component::Documentation => "documentation",
+            Component::Unknown => "editor",
         };
-        let native_component = env.get_static_field(component_class, component_method, "Lnet/wooga/uvm/Component;")?;
+        let native_component = env.get_static_field(
+            component_class,
+            component_method,
+            "Lnet/wooga/uvm/Component;",
+        )?;
         let native_component = native_component.l()?;
         Ok(native_component)
     }
@@ -97,6 +121,7 @@ mod jni_utils {
         if let Some(source) = err.source() {
             eprintln!("{}", source);
         }
+        eprintln!("{}", err.description());
 
         JObject::null().into_inner()
     }
@@ -104,7 +129,10 @@ mod jni_utils {
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_uvmVersion(env: JNIEnv, _class: JClass) -> jstring {
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_uvmVersion(
+    env: JNIEnv,
+    _class: JClass,
+) -> jstring {
     env.new_string(cargo_version!())
         .map(|s| s.into_inner())
         .unwrap_or_else(jni_utils::print_error_and_return_null)
@@ -115,7 +143,11 @@ fn list_installations(env: &JNIEnv) -> error::UvmJniResult<jobjectArray> {
     let installations: Vec<uvm_core::Installation> = installations.collect();
     let installation_class = env.find_class("net/wooga/uvm/Installation")?;
 
-    let output = env.new_object_array(installations.len() as jsize, installation_class, JObject::null())?;
+    let output = env.new_object_array(
+        installations.len() as jsize,
+        installation_class,
+        JObject::null(),
+    )?;
     for (i, installation) in installations.iter().enumerate() {
         let native_installation = jni_utils::get_installation(&env, &installation)?;
         env.set_object_array_element(output, i as jsize, native_installation)?;
@@ -126,21 +158,23 @@ fn list_installations(env: &JNIEnv) -> error::UvmJniResult<jobjectArray> {
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_listInstallations(env: JNIEnv, _class: JClass) -> jobjectArray {
-    list_installations(&env)
-        .unwrap_or_else(jni_utils::print_error_and_return_null)
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_listInstallations(
+    env: JNIEnv,
+    _class: JClass,
+) -> jobjectArray {
+    list_installations(&env).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersion(env: JNIEnv, _class: JClass, path: JObject) -> jstring {
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersion(
+    env: JNIEnv,
+    _class: JClass,
+    path: JObject,
+) -> jstring {
     jni_utils::get_path(&env, path)
-        .and_then(|path| {
-            uvm_core::dectect_project_version(&path, Some(true)).map_err(|e| e.into())
-        })
-        .and_then(|version| {
-            env.new_string(version.to_string()).map_err(|e| e.into())
-        })
+        .and_then(|path| uvm_core::dectect_project_version(&path, Some(true)).map_err(|e| e.into()))
+        .and_then(|version| env.new_string(version.to_string()).map_err(|e| e.into()))
         .map(|s| s.into_inner())
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
@@ -157,9 +191,12 @@ fn locate_installation(env: &JNIEnv, version: JString) -> error::UvmJniResult<jo
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_locateUnityInstallation(env: JNIEnv, _class: JClass, version: JString) -> jobject {
-    locate_installation(&env, version)
-        .unwrap_or_else(jni_utils::print_error_and_return_null)
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_locateUnityInstallation(
+    env: JNIEnv,
+    _class: JClass,
+    version: JString,
+) -> jobject {
+    locate_installation(&env, version).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 struct Variant(InstallVariant);
@@ -184,7 +221,12 @@ impl From<jint> for Variant {
     }
 }
 
-fn install_unity_editor(env: &JNIEnv, version: JString, destination: Option<JObject>, components: Option<jobjectArray>) -> error::UvmJniResult<jobject> {
+fn install_unity_editor(
+    env: &JNIEnv,
+    version: JString,
+    destination: Option<JObject>,
+    components: Option<jobjectArray>,
+) -> error::UvmJniResult<jobject> {
     let version = env.get_string(version)?;
     let version: String = version.into();
     let version = Version::from_str(&version)?;
@@ -210,35 +252,55 @@ fn install_unity_editor(env: &JNIEnv, version: JString, destination: Option<JObj
         None
     };
 
-    let installation = install::install(version, destination, variants)?;
+    let installation = install::install(&version, &destination, variants)?;
     let native_installation = jni_utils::get_installation(&env, &installation)?;
     Ok(native_installation.into_inner())
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2(env: JNIEnv, _class: JClass, version: JString, destination: JObject) -> jobject {
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2(
+    env: JNIEnv,
+    _class: JClass,
+    version: JString,
+    destination: JObject,
+) -> jobject {
     install_unity_editor(&env, version, Some(destination), None)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2(env: JNIEnv, _class: JClass, version: JString) -> jobject {
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2(
+    env: JNIEnv,
+    _class: JClass,
+    version: JString,
+) -> jobject {
     install_unity_editor(&env, version, None, None)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2_3Lnet_wooga_uvm_Component_2(env: JNIEnv, _class: JClass, version: JString, components: jobjectArray) -> jobject {
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2_3Lnet_wooga_uvm_Component_2(
+    env: JNIEnv,
+    _class: JClass,
+    version: JString,
+    components: jobjectArray,
+) -> jobject {
     install_unity_editor(&env, version, None, Some(components))
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2_3Lnet_wooga_uvm_Component_2(env: JNIEnv, _class: JClass, version: JString, destination: JObject, components: jobjectArray) -> jobject {
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2_3Lnet_wooga_uvm_Component_2(
+    env: JNIEnv,
+    _class: JClass,
+    version: JString,
+    destination: JObject,
+    components: jobjectArray,
+) -> jobject {
     install_unity_editor(&env, version, Some(destination), Some(components))
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
@@ -253,19 +315,21 @@ fn get_installation_components(env: &JNIEnv, object: JObject) -> error::UvmJniRe
     let components: Vec<Component> = components.collect();
     let component_class = env.find_class("net/wooga/uvm/Component")?;
 
-    let output = env.new_object_array(components.len() as jsize, component_class, JObject::null())?;
+    let output =
+        env.new_object_array(components.len() as jsize, component_class, JObject::null())?;
     for (i, component) in components.iter().enumerate() {
-        let native_component = jni_utils::get_component(&env, &component)?;
+        let native_component = jni_utils::get_component(&env, *component)?;
         env.set_object_array_element(output, i as jsize, native_component)?;
     }
 
     Ok(output)
 }
 
-
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(env: JNIEnv, object: JObject) -> jobjectArray {
-    get_installation_components(&env, object)
-        .unwrap_or_else(jni_utils::print_error_and_return_null)
+pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(
+    env: JNIEnv,
+    object: JObject,
+) -> jobjectArray {
+    get_installation_components(&env, object).unwrap_or_else(jni_utils::print_error_and_return_null)
 }

@@ -1,18 +1,14 @@
 use std::collections::HashSet;
 use std::io;
-use std::io::Write;
-use std::path::{PathBuf,Path};
-use std::process;
-use std::str::FromStr;
-use std::sync::{Arc, Mutex, Condvar};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
-use uvm_core::brew;
 use uvm_core::install;
 use uvm_core::install::InstallVariant;
-use uvm_core::unity::{Installation,Version,Component};
-use uvm_core::unity::hub::editors::EditorInstallation;
 use uvm_core::unity::hub;
+use uvm_core::unity::hub::editors::EditorInstallation;
 use uvm_core::unity::hub::editors::Editors;
+use uvm_core::unity::{Component, Installation, Version};
 
 type EditorInstallLock = Mutex<Option<io::Result<()>>>;
 
@@ -20,18 +16,32 @@ type EditorInstallLock = Mutex<Option<io::Result<()>>>;
 struct InstallObject {
     version: Version,
     variant: InstallVariant,
-    destination: Option<PathBuf>
+    destination: Option<PathBuf>,
 }
 
-fn set_editor_install_lock(editor_installed_lock:&Arc<(EditorInstallLock,Condvar)>, value:io::Result<()>) {
+fn set_editor_install_lock(
+    editor_installed_lock: &Arc<(EditorInstallLock, Condvar)>,
+    value: io::Result<()>,
+) {
     let &(ref lock, ref cvar) = &**editor_installed_lock;
     let mut is_installed = lock.lock().unwrap();
     *is_installed = Some(value);
     cvar.notify_all();
 }
 
-fn install_component(install_object:InstallObject, editor_installed_lock:Arc<(EditorInstallLock,Condvar)>) -> io::Result<()> {
-    let installer = install::download_installer(install_object.variant.clone(), &install_object.version)?;
+fn install_component(
+    install_object: &InstallObject,
+    editor_installed_lock: Arc<(EditorInstallLock, Condvar)>,
+) -> io::Result<()> {
+    let installer =
+        install::download_installer(install_object.variant.clone(), &install_object.version)
+            .map_err(|error| {
+                io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Failed to fetch installer url \n{}", error.to_string()),
+                )
+            })?;
+
     debug!("installer location: {}", &installer.display());
 
     if install_object.variant != InstallVariant::Editor {
@@ -40,24 +50,45 @@ fn install_component(install_object:InstallObject, editor_installed_lock:Arc<(Ed
         let mut is_installed = lock.lock().unwrap();
         // As long as the value inside the `Mutex` is false, we wait.
         while (*is_installed).is_none() {
-            debug!("waiting for editor to finish installation of {}", &install_object.variant);
+            debug!(
+                "waiting for editor to finish installation of {}",
+                &install_object.variant
+            );
             is_installed = cvar.wait(is_installed).unwrap();
         }
 
-        if let Some(ref is_installed ) = *is_installed {
-            if let Err(err) = is_installed {
-                debug!("editor installation error. Abort installation of {}", &install_object.variant);
-                return Err(io::Error::new(io::ErrorKind::Other, format!("{} failed because of {}", &install_object.variant, InstallVariant::Editor)));
+        if let Some(ref is_installed) = *is_installed {
+            if let Err(_err) = is_installed {
+                debug!(
+                    "editor installation error. Abort installation of {}",
+                    &install_object.variant
+                );
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "{} failed because of {}",
+                        &install_object.variant,
+                        InstallVariant::Editor
+                    ),
+                ));
             }
-            trace!("editor installation finished. Continue installtion of {}", &install_object.variant);
+            trace!(
+                "editor installation finished. Continue installtion of {}",
+                &install_object.variant
+            );
         }
     }
 
-    let destination = install_object.clone().destination.ok_or_else(|| {
-        io::Error::new(io::ErrorKind::Other, "Missing installtion destination")
-    })?;
+    let destination = install_object
+        .clone()
+        .destination
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Missing installtion destination"))?;
 
-    debug!("install {} to {}",&install_object.variant, &destination.display());
+    debug!(
+        "install {} to {}",
+        &install_object.variant,
+        &destination.display()
+    );
     let install_f = match &install_object.variant {
         InstallVariant::Editor => install::install_editor,
         _ => install::install_module,
@@ -70,24 +101,32 @@ fn install_component(install_object:InstallObject, editor_installed_lock:Arc<(Ed
                 set_editor_install_lock(&editor_installed_lock, Ok(()));
             }
             result
-        })
-        .map_err(|error| {
-            if install_object.variant == InstallVariant::Editor {
-                let error = io::Error::new(io::ErrorKind::Other, "failed to install edit");
-                set_editor_install_lock(&editor_installed_lock, Err(error));
-            }
-            error
-        })
+        }).map_err(|error| {
+        if install_object.variant == InstallVariant::Editor {
+            let error = io::Error::new(io::ErrorKind::Other, "failed to install edit");
+            set_editor_install_lock(&editor_installed_lock, Err(error));
+        }
+        error
+    })
 }
 
-pub fn install(version:Version, destination: Option<PathBuf>, variants: Option<HashSet<InstallVariant>>) -> uvm_core::result::Result<Installation> {
-    install::ensure_tap_for_version(&version)?;
+pub fn install(
+    version: &Version,
+    destination: &Option<PathBuf>,
+    variants: Option<HashSet<InstallVariant>>,
+) -> uvm_core::result::Result<Installation> {
     let mut editor_installation = None;
     let base_dir = if let Some(ref destination) = destination {
         if destination.exists() && !destination.is_dir() {
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "Requested destination is not a directory.").into())
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Requested destination is not a directory.",
+            ).into());
         }
-        editor_installation = Some(EditorInstallation::new(version.to_owned(), destination.to_path_buf()));
+        editor_installation = Some(EditorInstallation::new(
+            version.to_owned(),
+            destination.to_path_buf(),
+        ));
         destination.to_path_buf()
     } else {
         hub::paths::install_path()
@@ -154,20 +193,17 @@ pub fn install(version:Version, destination: Option<PathBuf>, variants: Option<H
         }
     }
 
-    let mut diff = to_install.difference(&installed).cloned();
+    let diff = to_install.difference(&installed).cloned();
 
     let mut threads: Vec<thread::JoinHandle<io::Result<()>>> = Vec::new();
     let editor_installed_lock = Arc::new((Mutex::new(None), Condvar::new()));
     let mut editor_installing = false;
-    let size = to_install.len();
-    let mut counter = 1;
 
     for install_object in diff {
         let editor_installed_lock_c = editor_installed_lock.clone();
         editor_installing |= install_object.variant == InstallVariant::Editor;
-        counter += 1;
         threads.push(thread::spawn(move || {
-            install_component(install_object, editor_installed_lock_c)
+            install_component(&install_object, editor_installed_lock_c)
         }));
     }
 
@@ -184,28 +220,26 @@ pub fn install(version:Version, destination: Option<PathBuf>, variants: Option<H
                 io::ErrorKind::Other,
                 "Install thread failed",
             )),
-        })
-        .fold(Ok(()), |acc, r| {
-            if let Err(x) = r {
-                if let Err(y) = acc {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("{}\n{}", y, x),
-                    ));
-                }
-                return Err(io::Error::new(io::ErrorKind::Other, x));
+        }).fold(Ok(()), |acc, r| {
+        if let Err(x) = r {
+            if let Err(y) = acc {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("{}\n{}", y, x),
+                ));
             }
-            acc
-        })?;
+            return Err(io::Error::new(io::ErrorKind::Other, x));
+        }
+        acc
+    })?;
 
     //write new unity hub editor installation
     if let Some(installation) = editor_installation {
-        let mut editors = Editors::load()
-            .and_then(|mut editors| {
-                editors.add(installation);
-                editors.flush();
-                Ok(())
-            });
+        Editors::load().and_then(|mut editors| {
+            editors.add(&installation);
+            editors.flush()?;
+            Ok(())
+        })?;
     }
 
     let installation = Installation::new(base_dir.clone())?;
