@@ -17,6 +17,8 @@
 
 package net.wooga.uvm
 
+import spock.lang.Ignore
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -169,6 +171,7 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
+    @IgnoreIf({env.containsKey("CI")})
     def "installUnityEditor installs unity to default location"() {
         given: "a version to install"
         def version = "2017.1.0f1"
@@ -219,7 +222,10 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
+    @IgnoreIf({env.containsKey("CI")})
     def "installUnityEditor installs unity and components to default location"() {
+
+
         given: "a version to install"
         def version = "2017.1.0f1"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
