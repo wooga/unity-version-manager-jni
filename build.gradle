@@ -27,6 +27,13 @@ plugins {
 
 group "net.wooga"
 
+List<String> cliTasks = project.rootProject.gradle.startParameter.taskNames
+if (cliTasks.contains("rc")) {
+    cliTasks.remove("rc")
+    cliTasks.add("candidate")
+    project.rootProject.gradle.startParameter.setTaskNames(cliTasks)
+}
+
 configurations {
     rustLib {
         transitive = false
@@ -88,18 +95,18 @@ bintray {
     }
 }
 
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+    }
+}
+
 publishing {
     publications {
         Bintray(MavenPublication) {
             from components.java
         }
-    }
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
     }
 }
 

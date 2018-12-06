@@ -5,18 +5,30 @@ extern crate uvm_core;
 extern crate error_chain;
 #[macro_use]
 extern crate log;
+<<<<<<< HEAD
+
+mod install;
+
+use jni::objects::{JClass, JObject, JString, JValue};
+use jni::sys::{jint, jobject, jobjectArray, jsize, jstring};
+=======
 extern crate flexi_logger;
 
 mod install;
 
+use uvm_core::Version;
 use flexi_logger::{default_format, Logger};
-use jni::objects::{JClass, JObject, JString, JValue};
-use jni::sys::{jint, jobject, jobjectArray, jsize, jstring};
+>>>>>>> Add windows support
 use jni::JNIEnv;
 use std::collections::HashSet;
+use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+<<<<<<< HEAD
+=======
+use std::collections::HashSet;
 use std::sync::Once;
+>>>>>>> Add windows support
 use uvm_core::install::InstallVariant;
 use uvm_core::unity::Component;
 use uvm_core::Version;
@@ -44,11 +56,19 @@ mod error {
 
         links {
             Another(jni::errors::Error, jni::errors::ErrorKind);
+<<<<<<< HEAD
+        }
+
+        foreign_links {
+            Uvm(uvm_core::error::UvmError);
+            ParseVersionError(uvm_core::unity::ParseVersionError);
+=======
             UvmCore(uvm_core::error::UvmError, uvm_core::error::UvmErrorKind);
             UvmVersion(uvm_core::unity::UvmVersionError, uvm_core::unity::UvmVersionErrorKind);
         }
 
         foreign_links {
+>>>>>>> Add windows support
             Io(std::io::Error);
         }
     }
@@ -107,6 +127,7 @@ mod jni_utils {
     ) -> error::UvmJniResult<JObject<'a>> {
         let component_class = env.find_class("net/wooga/uvm/Component")?;
         let component_method = match component {
+<<<<<<< HEAD
             Component::Android => "android",
             Component::Ios => "ios",
             Component::TvOs => "tvOs",
@@ -121,6 +142,22 @@ mod jni_utils {
             Component::StandardAssets => "standardAssets",
             Component::Documentation => "documentation",
             Component::Unknown => "editor",
+=======
+            &Component::Android => "android",
+            &Component::Ios => "ios",
+            &Component::TvOs => "tvOs",
+            &Component::WebGl => "webGl",
+            &Component::Linux => "linux",
+            &Component::Windows => "windows",
+            &Component::WindowsMono => "windowsMono",
+            &Component::Editor => "editor",
+            &Component::Mono => "mono",
+            &Component::VisualStudio => "visualStudio",
+            &Component::MonoDevelop => "monoDevelop",
+            &Component::StandardAssets => "standardAssets",
+            &Component::Documentation => "documentation",
+            &Component::Unknown => "editor",
+>>>>>>> Add windows support
         };
         let native_component = env.get_static_field(
             component_class,
@@ -149,11 +186,15 @@ mod jni_utils {
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_uvmVersion(
     env: JNIEnv,
     _class: JClass,
 ) -> jstring {
+=======
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_uvmVersion(env: JNIEnv, _class: JClass) -> jstring {
     start_logger();
+>>>>>>> Add windows support
     env.new_string(cargo_version!())
         .map(|s| s.into_inner())
         .map_err(|e| e.into())
@@ -180,22 +221,30 @@ fn list_installations(env: &JNIEnv) -> error::UvmJniResult<jobjectArray> {
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_listInstallations(
     env: JNIEnv,
     _class: JClass,
 ) -> jobjectArray {
+=======
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_listInstallations(env: JNIEnv, _class: JClass) -> jobjectArray {
     start_logger();
+>>>>>>> Add windows support
     list_installations(&env).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersion(
     env: JNIEnv,
     _class: JClass,
     path: JObject,
 ) -> jstring {
+=======
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersion(env: JNIEnv, _class: JClass, path: JObject) -> jstring {
     start_logger();
+>>>>>>> Add windows support
     jni_utils::get_path(&env, path)
         .and_then(|path| uvm_core::dectect_project_version(&path, Some(true)).map_err(|e| e.into()))
         .and_then(|version| env.new_string(version.to_string()).map_err(|e| e.into()))
@@ -215,13 +264,19 @@ fn locate_installation(env: &JNIEnv, version: JString) -> error::UvmJniResult<jo
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_locateUnityInstallation(
     env: JNIEnv,
     _class: JClass,
     version: JString,
 ) -> jobject {
-    start_logger();
     locate_installation(&env, version).unwrap_or_else(jni_utils::print_error_and_return_null)
+=======
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_locateUnityInstallation(env: JNIEnv, _class: JClass, version: JString) -> jobject {
+    start_logger();
+    locate_installation(&env, version)
+        .unwrap_or_else(jni_utils::print_error_and_return_null)
+>>>>>>> Add windows support
 }
 
 struct Variant(InstallVariant);
@@ -284,13 +339,13 @@ fn install_unity_editor(
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2(
     env: JNIEnv,
     _class: JClass,
     version: JString,
     destination: JObject,
 ) -> jobject {
-    start_logger();
     install_unity_editor(&env, version, Some(destination), None)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
@@ -302,20 +357,24 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor
     _class: JClass,
     version: JString,
 ) -> jobject {
-    start_logger();
     install_unity_editor(&env, version, None, None)
+=======
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2(env: JNIEnv, _class: JClass, version: JString, destination: JObject) -> jobject {
+    start_logger();
+    install_unity_editor(&env, version, destination, None)
+>>>>>>> Add windows support
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2_3Lnet_wooga_uvm_Component_2(
     env: JNIEnv,
     _class: JClass,
     version: JString,
     components: jobjectArray,
 ) -> jobject {
-    start_logger();
     install_unity_editor(&env, version, None, Some(components))
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
@@ -329,8 +388,12 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor
     destination: JObject,
     components: jobjectArray,
 ) -> jobject {
-    start_logger();
     install_unity_editor(&env, version, Some(destination), Some(components))
+=======
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2_3Lnet_wooga_uvm_Component_2(env: JNIEnv, _class: JClass, version: JString, destination: JObject, components: jobjectArray) -> jobject {
+    start_logger();
+    install_unity_editor(&env, version, destination, Some(components))
+>>>>>>> Add windows support
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
@@ -356,10 +419,16 @@ fn get_installation_components(env: &JNIEnv, object: JObject) -> error::UvmJniRe
 
 #[no_mangle]
 #[allow(non_snake_case)]
+<<<<<<< HEAD
 pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(
     env: JNIEnv,
     object: JObject,
 ) -> jobjectArray {
-    start_logger();
     get_installation_components(&env, object).unwrap_or_else(jni_utils::print_error_and_return_null)
+=======
+pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(env: JNIEnv, object: JObject) -> jobjectArray {
+    start_logger();
+    get_installation_components(&env, object)
+        .unwrap_or_else(jni_utils::print_error_and_return_null)
+>>>>>>> Add windows support
 }

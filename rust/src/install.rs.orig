@@ -29,6 +29,7 @@ fn set_editor_install_lock(
     cvar.notify_all();
 }
 
+<<<<<<< HEAD
 fn install_component(
     install_object: &InstallObject,
     editor_installed_lock: Arc<(EditorInstallLock, Condvar)>,
@@ -42,6 +43,15 @@ fn install_component(
                 )
             })?;
 
+=======
+fn install_component(install_object:InstallObject, editor_installed_lock:Arc<(EditorInstallLock,Condvar)>) -> io::Result<()> {
+    let installer = install::download_installer(install_object.variant.clone(), &install_object.version).map_err(|error| {
+                    io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("Failed to fetch installer url \n{}", error.to_string()),
+                    )
+                })?;
+>>>>>>> Add windows support
     debug!("installer location: {}", &installer.display());
 
     if install_object.variant != InstallVariant::Editor {
@@ -110,11 +120,15 @@ fn install_component(
     })
 }
 
+<<<<<<< HEAD
 pub fn install(
     version: &Version,
     destination: &Option<PathBuf>,
     variants: Option<HashSet<InstallVariant>>,
-) -> uvm_core::error::Result<Installation> {
+) -> uvm_core::result::Result<Installation> {
+=======
+pub fn install(version:Version, destination: Option<PathBuf>, variants: Option<HashSet<InstallVariant>>) -> uvm_core::error::Result<Installation> {
+>>>>>>> Add windows support
     let mut editor_installation = None;
     let base_dir = if let Some(ref destination) = destination {
         if destination.exists() && !destination.is_dir() {
@@ -241,12 +255,20 @@ pub fn install(
 
     //write new unity hub editor installation
     if let Some(installation) = editor_installation {
-        let mut _editors = Editors::load()
+<<<<<<< HEAD
+        Editors::load().and_then(|mut editors| {
+            editors.add(&installation);
+            editors.flush()?;
+            Ok(())
+        })?;
+=======
+        let mut editors = Editors::load()
             .and_then(|mut editors| {
                 editors.add(&installation);
-                editors.flush()?;
+                editors.flush();
                 Ok(())
             });
+>>>>>>> Add windows support
     }
 
     let installation = Installation::new(base_dir.clone())?;
