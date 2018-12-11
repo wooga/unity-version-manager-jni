@@ -50,7 +50,7 @@ pipeline {
           stages {
             stage('assemble') {
               steps {
-                gradleWrapper "assemble"
+                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
 
               post {
@@ -70,7 +70,7 @@ pipeline {
               }
 
               steps {
-                gradleWrapper "check"
+                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
 
               post {
@@ -103,7 +103,7 @@ pipeline {
           stages {
             stage('assemble') {
               steps {
-                gradleWrapper "assemble"
+                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
 
               post {
@@ -123,7 +123,7 @@ pipeline {
               }
 
               steps {
-                gradleWrapper "check"
+                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
 
               post {
