@@ -26,7 +26,7 @@ import java.nio.file.Files
 class InstallationSpec extends Specification {
 
     @Shared
-    def buildDir
+    File buildDir
 
     def setup() {
         buildDir = new File('build/unityVersionManagerSpec')
@@ -60,6 +60,7 @@ class InstallationSpec extends Specification {
         assert destination.exists()
 
         expect:
+        installation
         installation.components == expectedComponents.toArray() as Component[]
 
         cleanup:

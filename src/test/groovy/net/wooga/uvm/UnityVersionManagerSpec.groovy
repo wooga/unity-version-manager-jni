@@ -28,7 +28,7 @@ import java.nio.file.Files
 class UnityVersionManagerSpec extends Specification {
 
     @Shared
-    def buildDir
+    File buildDir
 
     def setup() {
         buildDir = new File('build/unityVersionManagerSpec')
@@ -90,7 +90,7 @@ class UnityVersionManagerSpec extends Specification {
     }
 
     List<String> installedUnityVersions() {
-        def applications = new File("/Applications")
+        def applications = baseUnityPath()
         applications.listFiles(new FilenameFilter() {
             @Override
             boolean accept(File dir, String name) {
@@ -116,6 +116,24 @@ class UnityVersionManagerSpec extends Specification {
         resultMessage = expectedResult ? "the editor version" : "null"
     }
 
+    File baseUnityPath() {
+        if(isWindows()) {
+            new File("C:\\Program Files")
+        } else if (isMac()) {
+            new File("/Applications")
+        }
+    }
+
+
+    static String OS = System.getProperty("os.name").toLowerCase();
+    static boolean isWindows() {
+        return (OS.indexOf("win") >= 0);
+    }
+
+    static boolean isMac() {
+        return (OS.indexOf("mac") >= 0);
+    }
+
     @Unroll
     def "locateUnityInstallation returns #resultMessage when #reason"() {
         expect:
@@ -124,7 +142,7 @@ class UnityVersionManagerSpec extends Specification {
         where:
         version                          | reason                          | expectedResult
         null                             | "version is null"               | null
-        installedUnityVersions().first() | "when version is installed"     | new Installation(new File("/Applications/Unity-${installedUnityVersions().first()}"), installedUnityVersions().first())
+        installedUnityVersions().first() | "when version is installed"     | new Installation(new File(baseUnityPath(),"Unity-${installedUnityVersions().first()}"), installedUnityVersions().first())
         "1.1.1f1"                        | "when version is not installed" | null
         "2018.0.1"                       | "when version is invalid"       | null
 
@@ -163,9 +181,8 @@ class UnityVersionManagerSpec extends Specification {
         then:
         result != null
         result.location.exists()
-        result.location == destination
+        result.location.absolutePath == destination.absolutePath
         result.version == version
-        UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         cleanup:
         destination.deleteDir()
@@ -201,7 +218,8 @@ class UnityVersionManagerSpec extends Specification {
         assert !destination.exists()
 
         and: "no engines"
-        def playbackEngines = new File(destination, "PlaybackEngines")
+        def playbackEnginesPath = (isWindows()) ? "Editor/Data/PlaybackEngines" : "PlaybackEngines"
+        def playbackEngines = new File(destination, playbackEnginesPath)
         assert !playbackEngines.exists()
 
         when:
@@ -210,9 +228,9 @@ class UnityVersionManagerSpec extends Specification {
         then:
         result != null
         result.location.exists()
-        result.location == destination
+        result.location.absolutePath == destination.absolutePath
         result.version == version
-        UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
         destination.exists()
         playbackEngines.exists()
         new File(playbackEngines, "iOSSupport").exists()
