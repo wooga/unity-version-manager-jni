@@ -46,6 +46,9 @@ processRustSource {
             include "Cargo.toml"
             into file("${buildDir}/rust-project")
         }
+
+        println("replace version")
+        ant.replaceregexp(file: "${buildDir}/rust-project/Cargo.toml", match: '^version\\s=.*$', replace:"version = \"${project.version}\"", byline: true)
     }
 }
 

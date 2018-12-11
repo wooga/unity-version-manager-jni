@@ -69,15 +69,6 @@ class UnityVersionManagerSpec extends Specification {
         noExceptionThrown()
     }
 
-    @Unroll
-    def "uvmVersion is #expectedVersion"() {
-        expect:
-        UnityVersionManager.uvmVersion() == expectedVersion
-
-        where:
-        expectedVersion = "0.1.0"
-    }
-
     File mockUnityProject(String editorVersion) {
         def outerDir = File.createTempDir("uvm_jni_projects_", "_base_path")
         def projectDir = new File(outerDir, "unity_testproject")
