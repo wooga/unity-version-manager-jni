@@ -174,6 +174,8 @@ class UnityVersionManagerSpec extends Specification {
         result.location.exists()
         result.location.absolutePath == destination.absolutePath
         result.version == version
+        def installation = UnityVersionManager.locateUnityInstallation(version)
+        installation.location.absolutePath == result.location.absolutePath
 
         cleanup:
         destination.deleteDir()
@@ -192,7 +194,8 @@ class UnityVersionManagerSpec extends Specification {
         result != null
         result.location.exists()
         result.version == version
-        UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+        def installation = UnityVersionManager.locateUnityInstallation(version)
+        installation.location.absolutePath == result.location.absolutePath
 
         cleanup:
         result.location.deleteDir()
@@ -226,6 +229,8 @@ class UnityVersionManagerSpec extends Specification {
         playbackEngines.exists()
         new File(playbackEngines, "iOSSupport").exists()
         new File(playbackEngines, "AndroidPlayer").exists()
+        def installation = UnityVersionManager.locateUnityInstallation(version)
+        installation.location.absolutePath == result.location.absolutePath
 
         cleanup:
         destination.deleteDir()
@@ -251,6 +256,8 @@ class UnityVersionManagerSpec extends Specification {
         playbackEngines.exists()
         new File(playbackEngines, "iOSSupport").exists()
         new File(playbackEngines, "AndroidPlayer").exists()
+        def installation = UnityVersionManager.locateUnityInstallation(version)
+        installation.location.absolutePath == result.location.absolutePath
 
         cleanup:
         result.location.deleteDir()
