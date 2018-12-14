@@ -176,7 +176,13 @@ pub fn install(
         if let Some(variants) = variants {
             for variant in variants {
                 let component: Component = variant.into();
-                let variant_destination = component.installpath();
+                //fix better
+                let variant_destination = if cfg![windows] {
+                    Some(base_dir.to_path_buf())
+                } else {
+                    component.installpath()
+                };
+
                 let installation_data = InstallObject {
                     version: version.clone(),
                     variant: component.into(),
