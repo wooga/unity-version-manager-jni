@@ -75,6 +75,23 @@ sourceSets.main.resources {
 
 processResources.dependsOn(collectLibs)
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintray.user') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintray.key') : System.getenv('BINTRAY_API_KEY')
@@ -95,6 +112,27 @@ bintray {
     }
 }
 
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "manfred.endres"
+            name "Manfred Endres"
+            email "manfred.endres@wooga.net"
+        }
+    }
+
+    scm {
+        url "https://github.com/wooga/unity-version-manager-jni"
+    }
+}
+
 jacocoTestReport {
     reports {
         xml.enabled = true // coveralls plugin depends on xml format report
@@ -106,6 +144,23 @@ publishing {
     publications {
         Bintray(MavenPublication) {
             from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+
+            groupId 'net.wooga'
+            artifactId 'unity-version-manager-jni'
+            version project.version.toString()
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'A JNI library to execute unity version manager from java.')
+                root.appendNode('name', 'Unity Version Manager JNI')
+                root.appendNode('url', 'https://github.com/thombergs/myAwesomeLib')
+                root.children().last() + pomConfig
+            }
         }
     }
 }
