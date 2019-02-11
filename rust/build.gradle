@@ -24,7 +24,7 @@ rust {
     if(System.getProperty("os.name").toLowerCase().contains("windows")) {
         executable(searchPath())
     } else {
-        executable version : '1.30.0'
+        executable version : '1.32.0'
     }
 
     cargoToml './Cargo.toml'
