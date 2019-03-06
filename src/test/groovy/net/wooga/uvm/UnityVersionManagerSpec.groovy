@@ -262,4 +262,16 @@ class UnityVersionManagerSpec extends Specification {
         cleanup:
         result.location.deleteDir()
     }
+
+    def "returns unity version at location"() {
+        given: "a installation"
+        def installation = UnityVersionManager.listInstallations().first()
+        assert installation
+
+        when:
+        def result = UnityVersionManager.readUnityVersion(installation.location)
+
+        then:
+        result == installation.version
+    }
 }

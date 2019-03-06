@@ -363,3 +363,22 @@ pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(
     start_logger();
     get_installation_components(&env, object).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
+
+fn get_installation(env: &JNIEnv, path: JObject) -> error::UvmJniResult<jobject> {
+    let path = jni_utils::get_path(&env, path)?;
+    let installation = uvm_core::unity::Installation::new(&path)?;
+    let native_installation = jni_utils::get_installation(&env,&installation)?;
+    Ok(native_installation.into_inner())
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "system" fn Java_net_wooga_uvm_Installation_atLocation(
+    env: JNIEnv,
+    _class: JClass,
+    path: JObject
+) -> jobject {
+    start_logger();
+    get_installation(&env, path)
+        .unwrap_or_else(jni_utils::print_error_and_return_null)
+}

@@ -116,4 +116,19 @@ public class UnityVersionManager {
      * @see Installation
      */
     public static native Installation installUnityEditor(String version, File destination, Component[] components);
+
+
+    /**
+     * Return the version as {@code String} of the unity installation at the provided location or {@code Null}.
+     *
+     * @param installationLocation the path to the unity installation
+     * @return a version string or {@code null}
+     */
+    public static String readUnityVersion(File installationLocation) {
+        Installation installation = Installation.atLocation(installationLocation);
+        if(installation != null) {
+            return installation.getVersion();
+        }
+        return null;
+    }
 }

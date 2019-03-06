@@ -62,4 +62,12 @@ public class Installation {
     }
 
     public native Component[] getComponents();
+
+    /**
+     * Returns a @{code Installation} object from given path.
+     *
+     * @param installationLocation the path to the unity installation
+     * @return a @{code Installation} object or @{code null} if installation can't be found
+     */
+    public static native Installation atLocation(File installationLocation);
 }
