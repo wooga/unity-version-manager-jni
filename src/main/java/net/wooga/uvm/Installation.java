@@ -64,6 +64,19 @@ public class Installation {
     public native Component[] getComponents();
 
     /**
+     * Returns the path to the unity executable.
+     * <p>
+     * The path to the unity executable is system depended.
+     * <p>
+     * * on macOS: {@code Unity.app/Contents/MacOS/Unity}
+     * <p>
+     * * on windows: {@code Editor\\Unity.exe}
+     *
+     * @return the path to the executable
+     */
+    public native File getExecutable();
+
+    /**
      * Returns a @{code Installation} object from given path.
      *
      * @param installationLocation the path to the unity installation

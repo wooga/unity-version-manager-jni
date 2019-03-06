@@ -382,3 +382,25 @@ pub extern "system" fn Java_net_wooga_uvm_Installation_atLocation(
     get_installation(&env, path)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
+
+fn get_installation_executable(env: &JNIEnv, object: JObject) -> error::UvmJniResult<jobjectArray> {
+    let location = env.call_method(object, "getLocation", "()Ljava/io/File;", &[])?;
+    let location = location.l()?;
+    let path = jni_utils::get_path(&env, location)?;
+
+    let installation = uvm_core::unity::Installation::new(path)?;
+    let exec_path = installation.exec_path();
+    let exec_path = jni_utils::get_file(&env, &exec_path)?;
+    Ok(exec_path.into_inner())
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "system" fn Java_net_wooga_uvm_Installation_getExecutable(
+    env: JNIEnv,
+    object: JObject,
+) -> jobject {
+    start_logger();
+    get_installation_executable(&env, object)
+        .unwrap_or_else(jni_utils::print_error_and_return_null)
+}
