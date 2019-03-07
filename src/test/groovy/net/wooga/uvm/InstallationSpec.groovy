@@ -101,4 +101,34 @@ class InstallationSpec extends Specification {
         expect:
         !Installation.atLocation(File.createTempDir())
     }
+
+    File expectedUnityExecutable(File installationLocation) {
+        String os = System.getProperty("os.name").toLowerCase()
+        if (os.indexOf("win") >= 0) {
+            return new File(installationLocation, "Editor\\Unity.exe")
+        } else if (os.indexOf("mac") >= 0) {
+            return new File(installationLocation, "Unity.app/Contents/MacOS/Unity")
+        }
+        return null
+    }
+
+    @Unroll("returns path to unity executable")
+    def "returns path to executable"() {
+        given:
+        def basedir = Files.createTempDirectory(buildDir.toPath(), "installationSpec_path_to_executable").toFile()
+        basedir.deleteOnExit()
+        def destination = new File(basedir, version)
+        assert !destination.exists()
+        def installation = UnityVersionManager.installUnityEditor(version, destination)
+        assert destination.exists()
+
+        expect:
+        installation.executable.absoluteFile == expectedUnityExecutable(destination).absoluteFile
+
+        cleanup:
+        destination.deleteDir()
+        
+        where:
+        version = "2017.1.0f1"
+    }
 }
