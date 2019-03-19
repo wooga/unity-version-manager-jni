@@ -17,7 +17,8 @@
 
 package net.wooga.uvm
 
-import spock.lang.Ignore
+import net.wooga.test.unity.ProjectGeneratorRule
+import org.junit.Rule
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
@@ -29,6 +30,10 @@ class UnityVersionManagerSpec extends Specification {
 
     @Shared
     File buildDir
+
+    @Rule
+    ProjectGeneratorRule unityProject = new ProjectGeneratorRule()
+
 
     def setup() {
         buildDir = new File('build/unityVersionManagerSpec')
@@ -46,9 +51,39 @@ class UnityVersionManagerSpec extends Specification {
         method                    | arguments
         "uvmVersion"              | null
         "listInstallations"       | null
-        "detectProjectVersion"    | [new File("")]
         "locateUnityInstallation" | null
     }
+
+    @Unroll
+    def ":detectProjectVersion with #message throws #expectedException"() {
+        when:
+        UnityVersionManager.detectProjectVersion(arguments)
+
+        then:
+        thrown(expectedException)
+
+        where:
+        arguments              | expectedException     | message
+        null                   | NullPointerException  | "null argument"
+        new File("customPath") | FileNotFoundException | "invalid project path"
+    }
+
+    @Unroll
+    def ":detectProjectVersion with invalid project version throws #expectedException"() {
+        given: "invalid project version file"
+        new File(unityProject.projectDir, "ProjectSettings/ProjectVersion.txt").text = "invalid version"
+
+        when:
+        UnityVersionManager.detectProjectVersion(unityProject.projectDir)
+
+        then:
+        thrown(expectedException)
+
+        where:
+        expectedException        | _
+        IllegalArgumentException | _
+    }
+
 
     def "can call :installUnityEditor on UnityVersionManager"() {
         when:
@@ -93,22 +128,16 @@ class UnityVersionManagerSpec extends Specification {
     }
 
     @Unroll
-    def "detectProjectVersion returns #resultMessage when #reason"() {
-        expect:
-        UnityVersionManager.detectProjectVersion(path) == expectedResult
+    def "detectProjectVersion returns the editor version when path points to a directory containing a unity project"() {
+        given:
+        unityProject.projectVersion = "2017.1.2f3"
 
-        where:
-        path                                      | reason                                                  | expectedResult
-        null                                      | "path is null"                                          | null
-        File.createTempDir()                      | "path points to an invalid location"                    | null
-        mockUnityProject("2018.2b4")              | "editor version is invalid"                             | null
-        mockUnityProject("2018.2.1b4")            | "path points to a unity project location"               | "2018.2.1b4"
-        mockUnityProject("2017.1.2f3").parentFile | "path points to a directory containing a unity project" | "2017.1.2f3"
-        resultMessage = expectedResult ? "the editor version" : "null"
+        expect:
+        UnityVersionManager.detectProjectVersion(unityProject.projectDir) == "2017.1.2f3"
     }
 
     File baseUnityPath() {
-        if(isWindows()) {
+        if (isWindows()) {
             new File("C:\\Program Files")
         } else if (isMac()) {
             new File("/Applications")
@@ -117,6 +146,7 @@ class UnityVersionManagerSpec extends Specification {
 
 
     static String OS = System.getProperty("os.name").toLowerCase();
+
     static boolean isWindows() {
         return (OS.indexOf("win") >= 0);
     }
@@ -133,7 +163,7 @@ class UnityVersionManagerSpec extends Specification {
         where:
         version                          | reason                          | expectedResult
         null                             | "version is null"               | null
-        installedUnityVersions().first() | "when version is installed"     | new Installation(new File(baseUnityPath(),"Unity-${installedUnityVersions().first()}"), installedUnityVersions().first())
+        installedUnityVersions().first() | "when version is installed"     | new Installation(new File(baseUnityPath(), "Unity-${installedUnityVersions().first()}"), installedUnityVersions().first())
         "1.1.1f1"                        | "when version is not installed" | null
         "2018.0.1"                       | "when version is invalid"       | null
 
@@ -181,7 +211,7 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @IgnoreIf({ env.containsKey("CI") })
     def "installUnityEditor installs unity to default location"() {
         given: "a version to install"
         def version = "2017.1.0f1"
@@ -236,7 +266,7 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @IgnoreIf({ env.containsKey("CI") })
     def "installUnityEditor installs unity and components to default location"() {
 
 

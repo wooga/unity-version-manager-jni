@@ -20,6 +20,7 @@ use std::sync::Once;
 use uvm_core::install::InstallVariant;
 use uvm_core::unity::Component;
 use uvm_core::Version;
+use error_chain::ChainedError;
 
 static START_LOGGER: Once = Once::new();
 
@@ -43,7 +44,7 @@ mod error {
         }
 
         links {
-            Another(jni::errors::Error, jni::errors::ErrorKind);
+            JNI(jni::errors::Error, jni::errors::ErrorKind);
             UvmCore(uvm_core::error::UvmError, uvm_core::error::UvmErrorKind);
             UvmVersion(uvm_core::unity::UvmVersionError, uvm_core::unity::UvmVersionErrorKind);
         }
@@ -59,6 +60,7 @@ use error::*;
 mod jni_utils {
     use super::*;
     use uvm_core::unity;
+    use jni::objects::AutoLocal;
 
     /// Converts a `java.io.File` `JObject` into a `PathBuf`
     pub fn get_path(env: &JNIEnv, path: JObject) -> error::UvmJniResult<PathBuf> {
@@ -145,6 +147,54 @@ mod jni_utils {
 
         JObject::null().into_inner()
     }
+
+    pub fn print_exception(env: &JNIEnv) {
+        let exception_occurred = env.exception_check()
+            .unwrap_or_else(|e| panic!("{:?}", e));
+        if exception_occurred {
+            env.exception_describe()
+                .unwrap_or_else(|e| panic!("{:?}", e));
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn unwrap<T>(env: &JNIEnv, res: jni::errors::Result<T>) -> T {
+        res.unwrap_or_else(|e| {
+            print_exception(&env);
+            panic!("{}", e.display_chain().to_string());
+        })
+    }
+
+    pub fn throw_exception_and_return_null(env:&JNIEnv, err: UvmJniError) -> jobject {
+        error!("error: {}", err);
+        for err in err.iter().skip(1) {
+            error!("caused by: {}", err);
+        }
+
+        eprintln!("{:?}", *err.kind());
+        eprintln!("{}", err.description());
+        eprintln!("{}", err.display_chain().to_string());
+
+        let exception_type = match err {
+            error::UvmJniError(error::UvmJniErrorKind::JNI(jni::errors::ErrorKind::NullPtr(_)),_) => {
+                "java/lang/NullPointerException"
+            },
+            error::UvmJniError(error::UvmJniErrorKind::Io(ref ioError),_) => {
+                match ioError.kind() {
+                    std::io::ErrorKind::NotFound => "java/io/FileNotFoundException",
+                    std::io::ErrorKind::InvalidInput => "java/lang/IllegalArgumentException",
+                    _ => "java/lang/Exception"
+                }
+            },
+            _ => {
+                "java/lang/Exception"
+            }
+        };
+
+        env.throw_new(exception_type, err.description());
+
+        JObject::null().into_inner()
+    }
 }
 
 #[no_mangle]
@@ -200,7 +250,7 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersi
         .and_then(|path| uvm_core::dectect_project_version(&path, Some(true)).map_err(|e| e.into()))
         .and_then(|version| env.new_string(version.to_string()).map_err(|e| e.into()))
         .map(|s| s.into_inner())
-        .unwrap_or_else(jni_utils::print_error_and_return_null)
+        .unwrap_or_else(|err| jni_utils::throw_exception_and_return_null(&env, err))
 }
 
 fn locate_installation(env: &JNIEnv, version: JString) -> error::UvmJniResult<jobject> {

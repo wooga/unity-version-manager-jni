@@ -41,6 +41,7 @@ configurations {
 }
 
 repositories {
+    maven { url "https://dl.bintray.com/wooga/maven" }
     mavenCentral()
     jcenter()
 }
@@ -50,6 +51,7 @@ dependencies {
 
     testCompile "org.codehaus.groovy:groovy-all:2.4.15"
     testCompile "org.spockframework:spock-core:1.2-groovy-2.4"
+    testCompile 'net.wooga.test:unity-project-generator-rule:0.2.0'
 }
 
 task collectLibs() {

@@ -20,6 +20,7 @@ package net.wooga.uvm;
 import cz.adamh.utils.NativeUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -56,8 +57,9 @@ public class UnityVersionManager {
      *
      * @param projectPath the path to the unity project root
      * @return a version string or {@code NULL}
+     * @throws FileNotFoundException
      */
-    public static native String detectProjectVersion(File projectPath);
+    public static native String detectProjectVersion(File projectPath) throws FileNotFoundException;
 
     /**
      * Returns the path to the installation location for the provided version or {@code Null}.
