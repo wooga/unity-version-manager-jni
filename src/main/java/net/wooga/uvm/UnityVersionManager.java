@@ -121,7 +121,7 @@ public class UnityVersionManager {
     /**
      * Return the version as {@code String} of the unity installation at the provided location or {@code Null}.
      *
-     * @param installationLocation the path to the unity installation
+     * @param installationLocation the path to the unity installation or Unity executable
      * @return a version string or {@code null}
      */
     public static String readUnityVersion(File installationLocation) {

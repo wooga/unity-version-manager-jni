@@ -97,6 +97,30 @@ class InstallationSpec extends Specification {
         version = "2017.1.0f1"
     }
 
+    @Unroll("can fetch installation with executable path")
+    def "get a installation from a exec path"() {
+        given:
+        def basedir = Files.createTempDirectory(buildDir.toPath(), "installationSpec_installation_at_location").toFile()
+        basedir.deleteOnExit()
+        def destination = new File(basedir, version)
+        assert !destination.exists()
+        def installation = UnityVersionManager.installUnityEditor(version, destination)
+        assert destination.exists()
+
+        expect:
+        def installation2 = Installation.atLocation(installation.executable)
+
+        installation2 != null
+        installation2 == installation
+        !installation2.is(installation)
+
+        cleanup:
+        destination.deleteDir()
+
+        where:
+        version = "2017.1.0f1"
+    }
+
     def "return null when installation at location doesn't exist"() {
         expect:
         !Installation.atLocation(File.createTempDir())
