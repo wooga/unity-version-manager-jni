@@ -364,9 +364,55 @@ pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(
     get_installation_components(&env, object).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
+#[cfg(target_os = "macos")]
+fn adjust_installation_path(path:&Path) -> Option<&Path> {
+    // if the path points to a file it could be the executable
+    if path.is_file() {
+        if let Some(name) = path.file_name() {
+            if name == "Unity" {
+                path.parent()
+                    .and_then(|path| path.parent())
+                    .and_then(|path| path.parent())
+                    .and_then(|path| path.parent())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn adjust_installation_path(path:&Path) -> Option<&Path> {
+    // if the path points to a file it could be the executable
+    if path.is_file() {
+        if let Some(name) = path.file_name() {
+            if name == "Unity.exe" {
+                path.parent()
+                    .and_then(|path| path.parent())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
 fn get_installation(env: &JNIEnv, path: JObject) -> error::UvmJniResult<jobject> {
     let path = jni_utils::get_path(&env, path)?;
-    let installation = uvm_core::unity::Installation::new(&path)?;
+
+    let path = if let Some(p) = adjust_installation_path(&path) {
+        p
+    } else {
+        &path
+    };
+    let installation = uvm_core::unity::Installation::new(path)?;
     let native_installation = jni_utils::get_installation(&env,&installation)?;
     Ok(native_installation.into_inner())
 }
