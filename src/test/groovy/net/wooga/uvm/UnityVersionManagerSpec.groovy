@@ -30,6 +30,10 @@ class UnityVersionManagerSpec extends Specification {
     @Shared
     File buildDir
 
+    def setupSpec() {
+
+    }
+
     def setup() {
         buildDir = new File('build/unityVersionManagerSpec')
         buildDir.mkdirs()
@@ -112,17 +116,23 @@ class UnityVersionManagerSpec extends Specification {
             new File("C:\\Program Files")
         } else if (isMac()) {
             new File("/Applications")
+        } else if (isLinux()) {
+            new File("${System.getenv('HOME')}/.local/share")
         }
     }
 
 
-    static String OS = System.getProperty("os.name").toLowerCase();
+    static String OS = System.getProperty("os.name").toLowerCase()
     static boolean isWindows() {
-        return (OS.indexOf("win") >= 0);
+        return (OS.indexOf("win") >= 0)
     }
 
     static boolean isMac() {
-        return (OS.indexOf("mac") >= 0);
+        return (OS.indexOf("mac") >= 0)
+    }
+
+    static boolean isLinux() {
+        return (OS.indexOf("linux") >= 0)
     }
 
     @Unroll
@@ -158,7 +168,7 @@ class UnityVersionManagerSpec extends Specification {
 
     def "installUnityEditor installs unity to location"() {
         given: "a version to install"
-        def version = "2017.1.0f1"
+        def version = "2019.3.0a5"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         and: "a temp install location"
@@ -184,7 +194,7 @@ class UnityVersionManagerSpec extends Specification {
     @IgnoreIf({env.containsKey("CI")})
     def "installUnityEditor installs unity to default location"() {
         given: "a version to install"
-        def version = "2017.1.0f1"
+        def version = "2019.3.0a5"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         when:
@@ -203,7 +213,7 @@ class UnityVersionManagerSpec extends Specification {
 
     def "installUnityEditor installs unity and components to location"() {
         given: "a version to install"
-        def version = "2017.1.0f1"
+        def version = "2019.3.0a5"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         and: "a temp install location"
@@ -212,7 +222,7 @@ class UnityVersionManagerSpec extends Specification {
         assert !destination.exists()
 
         and: "no engines"
-        def playbackEnginesPath = (isWindows()) ? "Editor/Data/PlaybackEngines" : "PlaybackEngines"
+        def playbackEnginesPath = (isWindows() || isLinux()) ? "Editor/Data/PlaybackEngines" : "PlaybackEngines"
         def playbackEngines = new File(destination, playbackEnginesPath)
         assert !playbackEngines.exists()
 
@@ -241,7 +251,7 @@ class UnityVersionManagerSpec extends Specification {
 
 
         given: "a version to install"
-        def version = "2017.1.0f1"
+        def version = "2019.3.0a5"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         when:
