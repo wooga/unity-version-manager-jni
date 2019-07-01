@@ -70,7 +70,7 @@ class InstallationSpec extends Specification {
         components                         | expectedComponents                 | reason
         [Component.android, Component.ios] | [Component.android, Component.ios] | "when components are installed"
         []                                 | []                                 | "when no components are installed"
-        version = "2017.1.0f1"
+        version = "2019.3.0a5"
         valueMessage = components.size() > 0 ? "list of installed components" : "empty list"
     }
 
@@ -94,7 +94,7 @@ class InstallationSpec extends Specification {
         destination.deleteDir()
 
         where:
-        version = "2017.1.0f1"
+        version = "2019.3.0a5"
     }
 
     @Unroll("can fetch installation with executable path")
@@ -118,7 +118,7 @@ class InstallationSpec extends Specification {
         destination.deleteDir()
 
         where:
-        version = "2017.1.0f1"
+        version = "2019.3.0a5"
     }
 
     def "return null when installation at location doesn't exist"() {
@@ -132,6 +132,8 @@ class InstallationSpec extends Specification {
             return new File(installationLocation, "Editor\\Unity.exe")
         } else if (os.indexOf("mac") >= 0) {
             return new File(installationLocation, "Unity.app/Contents/MacOS/Unity")
+        } else if (os.indexOf("linux") >= 0) {
+            return new File(installationLocation, "Editor/Unity")
         }
         return null
     }
@@ -153,6 +155,6 @@ class InstallationSpec extends Specification {
         destination.deleteDir()
         
         where:
-        version = "2017.1.0f1"
+        version = "2019.3.0a5"
     }
 }

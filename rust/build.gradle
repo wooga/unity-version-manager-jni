@@ -21,7 +21,8 @@ plugins {
 }
 
 rust {
-    if(System.getProperty("os.name").toLowerCase().contains("windows")) {
+    if(System.getProperty("os.name").toLowerCase().contains("windows")
+        || System.getenv("IN_DOCKER") != null) {
         executable(searchPath())
     } else {
         executable version : '1.32.0'
@@ -62,6 +63,7 @@ task copyOut(type:Copy) {
     from file("${buildDir}/rust-project/target/release/")
     include "*.dylib"
     include "*.dll"
+    include "*.so"
     into file("${buildDir}/output")
 }
 
@@ -69,5 +71,6 @@ configurations['default'].extendsFrom(configurations.rustLib)
 
 artifacts {
     rustLib file: file("${buildDir}/output/libuvm_jni.dylib"), name: "libuvm_extern", type: "dylib", builtBy: copyOut
+    rustLib file: file("${buildDir}/output/libuvm_jni.so"), name: "libuvm_extern", type: "so", builtBy: copyOut
     rustLib file: file("${buildDir}/output/uvm_jni.dll"), name: "libuvm_extern", type: "dll", builtBy: copyOut
 }

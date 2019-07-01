@@ -101,11 +101,12 @@ fn install_component(
                 set_editor_install_lock(&editor_installed_lock, Ok(()));
             }
             result
-        }).map_err(|error| {
-        if install_object.variant == InstallVariant::Editor {
-            let error = io::Error::new(io::ErrorKind::Other, "failed to install edit");
-            set_editor_install_lock(&editor_installed_lock, Err(error));
-        }
+        })
+        .map_err(|error| {
+            if install_object.variant == InstallVariant::Editor {
+                let error = io::Error::new(io::ErrorKind::Other, "failed to install edit");
+                set_editor_install_lock(&editor_installed_lock, Err(error));
+            }
         error
     })
 }

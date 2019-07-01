@@ -385,6 +385,25 @@ fn adjust_installation_path(path:&Path) -> Option<&Path> {
     }
 }
 
+#[cfg(target_os = "linux")]
+fn adjust_installation_path(path:&Path) -> Option<&Path> {
+    // if the path points to a file it could be the executable
+    if path.is_file() {
+        if let Some(name) = path.file_name() {
+            if name == "Unity" {
+                path.parent()
+                    .and_then(|path| path.parent())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn adjust_installation_path(path:&Path) -> Option<&Path> {
     // if the path points to a file it could be the executable
@@ -406,12 +425,13 @@ fn adjust_installation_path(path:&Path) -> Option<&Path> {
 
 fn get_installation(env: &JNIEnv, path: JObject) -> error::UvmJniResult<jobject> {
     let path = jni_utils::get_path(&env, path)?;
-
+    trace!("get installation {}", path.display());
     let path = if let Some(p) = adjust_installation_path(&path) {
         p
     } else {
         &path
     };
+    trace!("adjusted path: {}", path.display());
     let installation = uvm_core::unity::Installation::new(path)?;
     let native_installation = jni_utils::get_installation(&env,&installation)?;
     Ok(native_installation.into_inner())

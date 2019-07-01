@@ -28,6 +28,11 @@ pipeline {
   parameters {
     choice(choices: "SNAPSHOT\nrc\nfinal", description: 'Choose the distribution type', name: 'RELEASE_TYPE')
     choice(choices: "patch\nminor\nmajor", description: 'Choose the change scope', name: 'RELEASE_SCOPE')
+    booleanParam(name: 'SKIP_CHECK', defaultValue: false, description: 'skip verification')
+  }
+
+  environment {
+    CI = true
   }
 
   stages {
@@ -44,7 +49,7 @@ pipeline {
       parallel {
         stage('osx') {
           agent {
-            label "osx && atlas"
+            label "osx && atlas && primary"
           }
 
           stages {
@@ -58,6 +63,9 @@ pipeline {
                   archiveArtifacts artifacts: "rust/build/output/*.dylib"
                   stash(name: 'osx_rust', useDefaultExcludes: true, includes: ".gradle/**/*, **/build/**/*", excludes: "build/libs/**")
                 }
+                failure {
+                    archiveArtifacts artifacts: "rust/build/tmp/cargo/compileLibRust/error.txt"
+                }
               }
             }
 
@@ -65,7 +73,63 @@ pipeline {
               when {
                 beforeAgent true
                 expression {
-                  return params.RELEASE_TYPE == "SNAPSHOT"
+                  return params.RELEASE_TYPE == "SNAPSHOT" && !params.SKIP_CHECK
+                }
+              }
+
+              steps {
+                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+              }
+
+              post {
+                success {
+                  gradleWrapper "jacocoTestReport coveralls"
+                  publishHTML([
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'build/reports/jacoco/test/html',
+                    reportFiles: 'index.html',
+                    reportName: 'Coverage',
+                    reportTitles: ''
+                    ])
+                }
+
+                always {
+                  junit allowEmptyResults: true, testResults: '**/build/test-results/**/*.xml'
+                }
+              }
+            }
+          }
+        }
+
+        stage('linux') {
+          agent {
+            dockerfile true
+          }
+
+          stages {
+            stage('assemble') {
+              steps {
+                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+              }
+
+              post {
+                success {
+                  archiveArtifacts artifacts: "rust/build/output/*.so"
+                  stash(name: 'linux_lib', useDefaultExcludes: true, includes: "rust/build/output/*.so")
+                }
+                failure {
+                  archiveArtifacts artifacts: "rust/build/tmp/cargo/compileLibRust/error.txt"
+                }
+              }
+            }
+
+            stage('check') {
+              when {
+                beforeAgent true
+                expression {
+                  return params.RELEASE_TYPE == "SNAPSHOT" && !params.SKIP_CHECK
                 }
               }
 
@@ -111,6 +175,9 @@ pipeline {
                   archiveArtifacts artifacts: "rust/build/output/*.dll"
                   stash(name: 'windows_lib', useDefaultExcludes: true, includes: "rust/build/output/*.dll")
                 }
+                failure {
+                    archiveArtifacts artifacts: "rust/build/tmp/cargo/compileLibRust/error.txt"
+                }
               }
             }
 
@@ -118,7 +185,7 @@ pipeline {
               when {
                 beforeAgent true
                 expression {
-                  return params.RELEASE_TYPE == "SNAPSHOT"
+                  return params.RELEASE_TYPE == "SNAPSHOT" && !params.SKIP_CHECK
                 }
               }
 
@@ -152,12 +219,15 @@ pipeline {
 
     stage('assemble final jar') {
       agent {
-        label "osx && atlas"
+        label "osx && atlas && primary"
       }
 
       steps {
         unstash("osx_rust")
         unstash("windows_lib")
+        unstash("linux_lib")
+
+        sh "ls rust/build/output"
 
         gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
       }
