@@ -22,7 +22,7 @@ ENV PATH="${HOME}/.cargo/bin:${PATH}"
 
 WORKDIR /home/ci/
 RUN git clone https://github.com/Larusso/unity-version-manager.git
-RUN cd unity-version-manager && git fetch && git checkout 744f4f82013237cb39653fbd691470eee268e25a && /home/ci/.cargo/bin/cargo build && ./target/debug/uvm install 2019.1.0a7 /home/ci/.local/share/Unity-2019.1.0a7
+RUN cd unity-version-manager && git fetch && git checkout v2.2.0 && make install && uvm install 2019.1.0a7 /home/ci/.local/share/Unity-2019.1.0a7
 ENV PATH=$PATH:/home/ci/unity-version-manager/target/debug
 # Chown all the files to the app user.
 RUN chown -R ci:ci $HOME
