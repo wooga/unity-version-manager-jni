@@ -48,7 +48,7 @@ repositories {
 dependencies {
     rustLib project('rust')
 
-    testCompile "org.codehaus.groovy:groovy-all:2.4.15"
+    testCompile "org.codehaus.groovy:groovy-all:2.5.7"
     testCompile "org.spockframework:spock-core:1.2-groovy-2.4"
 }
 
