@@ -1703,7 +1703,7 @@ dependencies = [
 
 [[package]]
 name = "uvm_core"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cluFlock 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1737,7 +1737,7 @@ dependencies = [
  "flexi_logger 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "jni 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "uvm_core 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uvm_core 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2047,7 +2047,7 @@ dependencies = [
 "checksum url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)" = "dd4e7c0d531266369519a4aa4f399d748bd37043b00bde1e4ff1f60a120b355a"
 "checksum utf8-ranges 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "9d50aa7650df78abf942826607c62468ce18d9019673d4a2ebe1865dbb96ffde"
 "checksum uuid 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)" = "90dbc611eb48397705a6b0f6e917da23ae517e4d127123d2cf7674206627d32a"
-"checksum uvm_core 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "180c4a2f47efe603ea8a894797e60b50bd67b69bb66b26a91328c5c56dc19b4a"
+"checksum uvm_core 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "fe805c98cb2d06fdae8b3348bc09f8e577769ea087e4c5ece7bce16eb686c715"
 "checksum vcpkg 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)" = "33dd455d0f96e90a75803cfeb7f948768c08d70a6de9a8d2362461935698bf95"
 "checksum version_check 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "914b1a6776c4c929a602fafd8bc742e06365d4bcbe48c30f9cca5824f70dc9dd"
 "checksum void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
