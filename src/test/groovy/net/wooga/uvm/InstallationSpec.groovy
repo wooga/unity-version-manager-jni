@@ -17,6 +17,7 @@
 
 package net.wooga.uvm
 
+import spock.lang.Issue
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -97,12 +98,13 @@ class InstallationSpec extends Specification {
         version = "2019.3.0a5"
     }
 
-    @Unroll("can fetch installation with executable path")
+    @Issue("https://github.com/wooga/unity-version-manager-jni/issues/21")
+    @Unroll("can fetch installation with executable path #message")
     def "get a installation from a exec path"() {
         given:
         def basedir = Files.createTempDirectory(buildDir.toPath(), "installationSpec_installation_at_location").toFile()
         basedir.deleteOnExit()
-        def destination = new File(basedir, version)
+        def destination = versionInPath ? new File(basedir, version) : basedir
         assert !destination.exists()
         def installation = UnityVersionManager.installUnityEditor(version, destination)
         assert destination.exists()
@@ -119,6 +121,8 @@ class InstallationSpec extends Specification {
 
         where:
         version = "2019.3.0a5"
+        versionInPath = [true, false]
+        message = versionInPath ? "" : "without version information in destination path"
     }
 
     def "return null when installation at location doesn't exist"() {
