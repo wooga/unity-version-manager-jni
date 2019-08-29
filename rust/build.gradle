@@ -25,7 +25,7 @@ rust {
         || System.getenv("IN_DOCKER") != null) {
         executable(searchPath())
     } else {
-        executable version : '1.32.0'
+        executable version : '1.37.0'
     }
 
     cargoToml './Cargo.toml'
