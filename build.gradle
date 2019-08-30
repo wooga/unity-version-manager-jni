@@ -20,7 +20,7 @@ plugins {
     id 'groovy'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
-    id 'nebula.release' version '6.3.5'
+    id 'nebula.release' version '11.1.0'
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
 }
