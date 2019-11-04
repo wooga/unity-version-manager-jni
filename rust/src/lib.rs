@@ -1,25 +1,13 @@
-extern crate jni;
-#[macro_use]
-extern crate uvm_core;
-#[macro_use]
-extern crate error_chain;
-#[macro_use]
-extern crate log;
-extern crate flexi_logger;
-
-mod install;
-
 use flexi_logger::{default_format, Logger};
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys::{jint, jobject, jobjectArray, jsize, jstring};
 use jni::JNIEnv;
+use log::*;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Once;
-use uvm_core::install::InstallVariant;
-use uvm_core::unity::Component;
-use uvm_core::Version;
+use uvm_install2::unity::{Component, Version};
 
 static START_LOGGER: Once = Once::new();
 
@@ -33,9 +21,10 @@ fn start_logger() {
 }
 
 mod error {
+    use error_chain::*;
     use jni;
     use std;
-    use uvm_core;
+    use uvm_install2;
 
     error_chain! {
         types {
@@ -44,8 +33,9 @@ mod error {
 
         links {
             Another(jni::errors::Error, jni::errors::ErrorKind);
-            UvmCore(uvm_core::error::UvmError, uvm_core::error::UvmErrorKind);
-            UvmVersion(uvm_core::unity::UvmVersionError, uvm_core::unity::UvmVersionErrorKind);
+            UvmCore(uvm_install2::uvm_core_error::UvmError, uvm_install2::uvm_core_error::UvmErrorKind);
+            UvmInstall(uvm_install2::error::Error, uvm_install2::error::ErrorKind);
+            UvmVersion(uvm_install2::unity::UvmVersionError, uvm_install2::unity::UvmVersionErrorKind);
         }
 
         foreign_links {
@@ -58,7 +48,7 @@ use error::*;
 
 mod jni_utils {
     use super::*;
-    use uvm_core::unity;
+    use uvm_install2::unity;
 
     /// Converts a `java.io.File` `JObject` into a `PathBuf`
     pub fn get_path(env: &JNIEnv, path: JObject) -> error::UvmJniResult<PathBuf> {
@@ -105,22 +95,59 @@ mod jni_utils {
         env: &'a JNIEnv<'b>,
         component: Component,
     ) -> error::UvmJniResult<JObject<'a>> {
+        use Component::*;
         let component_class = env.find_class("net/wooga/uvm/Component")?;
         let component_method = match component {
-            Component::Android => "android",
-            Component::Ios => "ios",
-            Component::TvOs => "tvOs",
-            Component::WebGl => "webGl",
-            Component::Linux => "linux",
-            Component::Windows => "windows",
-            Component::WindowsMono => "windowsMono",
-            Component::Editor => "editor",
-            Component::Mono => "mono",
-            Component::VisualStudio => "visualStudio",
-            Component::MonoDevelop => "monoDevelop",
-            Component::StandardAssets => "standardAssets",
-            Component::Documentation => "documentation",
-            Component::Unknown => "editor",
+            Android => "android",
+            Ios => "ios",
+            TvOs => "tvOs",
+            WebGl => "webGl",
+            Linux => "linux",
+            Windows => "windows",
+            WindowsMono => "windowsMono",
+            Editor => "editor",
+            Mono => "mono",
+            VisualStudio => "visualStudio",
+            MonoDevelop => "monoDevelop",
+            StandardAssets => "standardAssets",
+            Documentation => "documentation",
+            #[cfg(windows)]
+            VisualStudioProfessionalUnityWorkload => "visualStudioProfessionalUnityWorkload",
+            #[cfg(windows)]
+            VisualStudioEnterpriseUnityWorkload => "visualStudioProfessionalUnityWorkload",
+            ExampleProject => "exampleProject",
+            Example => "exampleProject",
+            AndroidSdkNdkTools => "androidSdkNdkTools",
+            AndroidSdkPlatforms => "androidSdkPlatforms",
+            AndroidSdkPlatformTools => "androidSdkPlatformTools",
+            AndroidSdkBuildTools => "androidSdkBuildTools",
+            AndroidNdk => "androidNdk",
+            AndroidOpenJdk => "androidOpenJdk",
+            AppleTV => "appleTV",
+            LinuxMono => "linuxMono",
+            Mac => "mac",
+            MacIL2CPP => "macIL2CPP",
+            MacMono => "macMono",
+            #[cfg(windows)]
+            Metro => "metro",
+            #[cfg(windows)]
+            UwpIL2CPP => "uwpIL2CPP",
+            #[cfg(windows)]
+            UwpNet => "uwpNet",
+            #[cfg(windows)]
+            UniversalWindowsPlatform => "universalWindowsPlatform",
+            Samsungtv => "samsungtv",
+            SamsungTV => "samsungTV",
+            Tizen => "tizen",
+            Vuforia => "vuforia",
+            VuforiaAR => "vuforiaAR",
+            #[cfg(windows)]
+            WindowsIL2CCP => "windowsIL2CCP",
+            Facebook => "facebook",
+            FacebookGames => "facebookGames",
+            FacebookGameRoom => "facebookGameRoom",
+            Lumin => "lumin",
+            _ => "unknown",
         };
         let native_component = env.get_static_field(
             component_class,
@@ -154,15 +181,15 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_uvmVersion(
     _class: JClass,
 ) -> jstring {
     start_logger();
-    env.new_string(cargo_version!())
+    env.new_string("0.6.0")
         .map(|s| s.into_inner())
         .map_err(|e| e.into())
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 fn list_installations(env: &JNIEnv) -> error::UvmJniResult<jobjectArray> {
-    let installations = uvm_core::list_all_installations()?;
-    let installations: Vec<uvm_core::Installation> = installations.collect();
+    let installations = uvm_install2::list_all_installations()?;
+    let installations: Vec<uvm_install2::unity::Installation> = installations.collect();
     let installation_class = env.find_class("net/wooga/uvm/Installation")?;
 
     let output = env.new_object_array(
@@ -197,7 +224,9 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersi
 ) -> jstring {
     start_logger();
     jni_utils::get_path(&env, path)
-        .and_then(|path| uvm_core::dectect_project_version(&path, Some(true)).map_err(|e| e.into()))
+        .and_then(|path| {
+            uvm_install2::dectect_project_version(&path, Some(true)).map_err(|e| e.into())
+        })
         .and_then(|version| env.new_string(version.to_string()).map_err(|e| e.into()))
         .map(|s| s.into_inner())
         .unwrap_or_else(jni_utils::print_error_and_return_null)
@@ -207,7 +236,7 @@ fn locate_installation(env: &JNIEnv, version: JString) -> error::UvmJniResult<jo
     let version_string = env.get_string(version)?;
     let version_string: String = version_string.into();
     let version = Version::from_str(&version_string)?;
-    let installation = uvm_core::find_installation(&version)?;
+    let installation = uvm_install2::find_installation(&version)?;
 
     let native_installation = jni_utils::get_installation(&env, &installation)?;
     Ok(native_installation.into_inner())
@@ -224,24 +253,68 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_locateUnityInstall
     locate_installation(&env, version).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
-struct Variant(InstallVariant);
+#[derive(Debug, Eq, PartialEq, Hash)]
+struct Variant(Component);
 
-impl Variant {
-    pub fn value(self) -> InstallVariant {
-        self.0
+impl AsRef<Component> for Variant {
+    fn as_ref(&self) -> &Component {
+        &self.0
     }
 }
 
 impl From<jint> for Variant {
     fn from(component: jint) -> Self {
+        use Component::*;
         match component {
-            0 => Variant(InstallVariant::Android),
-            1 => Variant(InstallVariant::Ios),
-            3 => Variant(InstallVariant::WebGl),
-            4 => Variant(InstallVariant::Linux),
-            5 => Variant(InstallVariant::Windows),
-            6 => Variant(InstallVariant::WindowsMono),
-            _ => Variant(InstallVariant::Android),
+            0 => Variant(Android),
+            1 => Variant(Ios),
+            3 => Variant(WebGl),
+            4 => Variant(Linux),
+            5 => Variant(Windows),
+            6 => Variant(WindowsMono),
+            7 => Variant(Editor),
+            8 => Variant(Mono),
+            9 => Variant(VisualStudio),
+            10 => Variant(MonoDevelop),
+            11 => Variant(StandardAssets),
+            12 => Variant(Documentation),
+            #[cfg(windows)]
+            13 => Variant(VisualStudioEnterpriseUnityWorkload),
+            #[cfg(windows)]
+            14 => Variant(VisualStudioEnterpriseUnityWorkload),
+            15 => Variant(ExampleProject),
+            16 => Variant(Example),
+            17 => Variant(AndroidSdkNdkTools),
+            18 => Variant(AndroidSdkPlatforms),
+            19 => Variant(AndroidSdkPlatformTools),
+            20 => Variant(AndroidSdkBuildTools),
+            21 => Variant(AndroidNdk),
+            22 => Variant(AndroidOpenJdk),
+            23 => Variant(AppleTV),
+            24 => Variant(LinuxMono),
+            25 => Variant(Mac),
+            26 => Variant(MacIL2CPP),
+            27 => Variant(MacMono),
+            #[cfg(windows)]
+            28 => Variant(Metro),
+            #[cfg(windows)]
+            29 => Variant(UwpIL2CPP),
+            #[cfg(windows)]
+            30 => Variant(UwpNet),
+            #[cfg(windows)]
+            31 => Variant(UniversalWindowsPlatform),
+            32 => Variant(Samsungtv),
+            33 => Variant(SamsungTV),
+            34 => Variant(Tizen),
+            35 => Variant(Vuforia),
+            36 => Variant(VuforiaAR),
+            #[cfg(windows)]
+            37 => Variant(WindowsIL2CCP),
+            38 => Variant(Facebook),
+            39 => Variant(FacebookGames),
+            40 => Variant(FacebookGameRoom),
+            41 => Variant(Lumin),
+            _ => Variant(Unknown),
         }
     }
 }
@@ -264,20 +337,20 @@ fn install_unity_editor(
 
     let variants = if let Some(components) = components {
         let length = env.get_array_length(components)?;
-        let mut variants: HashSet<InstallVariant> = HashSet::with_capacity(length as usize);
+        let mut variants: HashSet<Variant> = HashSet::with_capacity(length as usize);
         for i in 0..length {
             let item = env.get_object_array_element(components, i)?;
             let item_value = env.call_method(item, "value", "()I", &[])?;
             let item_value: jint = item_value.i()?;
             let variant: Variant = item_value.into();
-            variants.insert(variant.value());
+            variants.insert(variant);
         }
         Some(variants)
     } else {
         None
     };
 
-    let installation = install::install(&version, &destination, variants)?;
+    let installation = uvm_install2::install(&version, variants, true, destination.as_ref())?;
     let native_installation = jni_utils::get_installation(&env, &installation)?;
     Ok(native_installation.into_inner())
 }
@@ -339,8 +412,8 @@ fn get_installation_components(env: &JNIEnv, object: JObject) -> error::UvmJniRe
     let location = location.l()?;
     let path = jni_utils::get_path(&env, location)?;
 
-    let installation = uvm_core::unity::Installation::new(path)?;
-    let components = uvm_core::unity::InstalledComponents::new(installation);
+    let installation = uvm_install2::unity::Installation::new(path)?;
+    let components = uvm_install2::unity::InstalledComponents::new(installation);
     let components: Vec<Component> = components.collect();
     let component_class = env.find_class("net/wooga/uvm/Component")?;
 
@@ -366,8 +439,8 @@ pub extern "system" fn Java_net_wooga_uvm_Installation_getComponents(
 
 fn get_installation(env: &JNIEnv, path: JObject) -> error::UvmJniResult<jobject> {
     let path = jni_utils::get_path(&env, path)?;
-    let installation = uvm_core::unity::Installation::new(path)?;
-    let native_installation = jni_utils::get_installation(&env,&installation)?;
+    let installation = uvm_install2::unity::Installation::new(path)?;
+    let native_installation = jni_utils::get_installation(&env, &installation)?;
     Ok(native_installation.into_inner())
 }
 
@@ -376,11 +449,10 @@ fn get_installation(env: &JNIEnv, path: JObject) -> error::UvmJniResult<jobject>
 pub extern "system" fn Java_net_wooga_uvm_Installation_atLocation(
     env: JNIEnv,
     _class: JClass,
-    path: JObject
+    path: JObject,
 ) -> jobject {
     start_logger();
-    get_installation(&env, path)
-        .unwrap_or_else(jni_utils::print_error_and_return_null)
+    get_installation(&env, path).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
 fn get_installation_executable(env: &JNIEnv, object: JObject) -> error::UvmJniResult<jobjectArray> {
@@ -388,7 +460,7 @@ fn get_installation_executable(env: &JNIEnv, object: JObject) -> error::UvmJniRe
     let location = location.l()?;
     let path = jni_utils::get_path(&env, location)?;
 
-    let installation = uvm_core::unity::Installation::new(path)?;
+    let installation = uvm_install2::unity::Installation::new(path)?;
     let exec_path = installation.exec_path();
     let exec_path = jni_utils::get_file(&env, &exec_path)?;
     Ok(exec_path.into_inner())
@@ -401,6 +473,5 @@ pub extern "system" fn Java_net_wooga_uvm_Installation_getExecutable(
     object: JObject,
 ) -> jobject {
     start_logger();
-    get_installation_executable(&env, object)
-        .unwrap_or_else(jni_utils::print_error_and_return_null)
+    get_installation_executable(&env, object).unwrap_or_else(jni_utils::print_error_and_return_null)
 }
