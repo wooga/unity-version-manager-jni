@@ -33,6 +33,7 @@ pipeline {
 
   environment {
     CI = true
+    RUST_LOG = "warn,uvm_core=trace,uvm_move_dir=trace,uvm_install2=trace,uvm_jni=trace"
   }
 
   stages {
@@ -45,11 +46,11 @@ pipeline {
     }
 
     stage("build") {
-      failFast true
+      failFast false
       parallel {
         stage('osx') {
           agent {
-            label "osx && atlas && primary && unity"
+            label "osx && atlas && primary && unity && fast"
           }
 
           stages {
