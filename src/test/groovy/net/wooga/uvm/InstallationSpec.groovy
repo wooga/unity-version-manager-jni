@@ -62,16 +62,16 @@ class InstallationSpec extends Specification {
 
         expect:
         installation
-        installation.components == expectedComponents.toArray() as Component[]
+        installation.components.toList().containsAll(expectedComponents)
 
         cleanup:
         destination.deleteDir()
 
         where:
-        components                         | expectedComponents                 | reason
-        [Component.android, Component.ios] | [Component.android, Component.ios] | "when components are installed"
-        []                                 | []                                 | "when no components are installed"
-        version = "2019.3.0a5"
+        components                         | expectedComponents                                                                                                                                                                                                 | reason
+        [Component.android, Component.ios] | [Component.android, Component.androidNdk, Component.androidOpenJdk, Component.androidSdkBuildTools, Component.androidSdkNdkTools, Component.androidSdkPlatforms, Component.androidSdkPlatformTools, Component.ios] | "when components are installed"
+        []                                 | []                                                                                                                                                                                                                 | "when no components are installed"
+        version = "2019.3.0b8"
         valueMessage = components.size() > 0 ? "list of installed components" : "empty list"
     }
 
@@ -157,7 +157,7 @@ class InstallationSpec extends Specification {
 
         cleanup:
         destination.deleteDir()
-        
+
         where:
         version = "2019.3.0a5"
     }
