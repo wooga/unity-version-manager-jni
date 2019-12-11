@@ -50,4 +50,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-[unity-version-manager]: github.com/Larusso/unity-version-manager
+[unity-version-manager]: https:://github.com/Larusso/unity-version-manager
