@@ -191,27 +191,27 @@ pipeline {
               }
 
               steps {
-                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
 
-              post {
-                success {
-                  gradleWrapper "jacocoTestReport coveralls"
-                  publishHTML([
-                    allowMissing: true,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'build/reports/jacoco/test/html',
-                    reportFiles: 'index.html',
-                    reportName: 'Coverage',
-                    reportTitles: ''
-                    ])
-                }
-
-                always {
-                  junit allowEmptyResults: true, testResults: '**/build/test-results/**/*.xml'
-                }
-              }
+//              post {
+//                success {
+//                  gradleWrapper "jacocoTestReport coveralls"
+//                  publishHTML([
+//                    allowMissing: true,
+//                    alwaysLinkToLastBuild: true,
+//                    keepAll: true,
+//                    reportDir: 'build/reports/jacoco/test/html',
+//                    reportFiles: 'index.html',
+//                    reportName: 'Coverage',
+//                    reportTitles: ''
+//                    ])
+//                }
+//
+//                always {
+//                  junit allowEmptyResults: true, testResults: '**/build/test-results/**/*.xml'
+//                }
+//              }
             }
           }
         }
