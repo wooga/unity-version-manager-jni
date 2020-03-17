@@ -17,6 +17,7 @@
 
 package net.wooga.uvm
 
+import com.wooga.spock.extensions.uvm.UnityInstallation
 import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -29,10 +30,6 @@ class UnityVersionManagerSpec extends Specification {
 
     @Shared
     File buildDir
-
-    def setupSpec() {
-
-    }
 
     def setup() {
         buildDir = new File('build/unityVersionManagerSpec')
@@ -84,18 +81,6 @@ class UnityVersionManagerSpec extends Specification {
         projectDir
     }
 
-    List<String> installedUnityVersions() {
-        def applications = baseUnityPath()
-        applications.listFiles(new FilenameFilter() {
-            @Override
-            boolean accept(File dir, String name) {
-                return name.startsWith("Unity-")
-            }
-        }).collect {
-            it.name.replace("Unity-", "")
-        }
-    }
-
     @Unroll
     def "detectProjectVersion returns #resultMessage when #reason"() {
         expect:
@@ -111,17 +96,6 @@ class UnityVersionManagerSpec extends Specification {
         resultMessage = expectedResult ? "the editor version" : "null"
     }
 
-    File baseUnityPath() {
-        if(isWindows()) {
-            new File("C:\\Program Files")
-        } else if (isMac()) {
-            new File("/Applications")
-        } else if (isLinux()) {
-            new File("${System.getenv('HOME')}/.local/share")
-        }
-    }
-
-
     static String OS = System.getProperty("os.name").toLowerCase()
     static boolean isWindows() {
         return (OS.indexOf("win") >= 0)
@@ -135,6 +109,10 @@ class UnityVersionManagerSpec extends Specification {
         return (OS.indexOf("linux") >= 0)
     }
 
+    @Shared
+    @UnityInstallation(version="2018.4.19f1", basePath = "build/unity", cleanup = true)
+    Installation preInstalledUnity2018_4_19f1
+
     @Unroll
     def "locateUnityInstallation returns #resultMessage when #reason"() {
         expect:
@@ -143,7 +121,7 @@ class UnityVersionManagerSpec extends Specification {
         where:
         version                          | reason                          | expectedResult
         null                             | "version is null"               | null
-        installedUnityVersions().first() | "when version is installed"     | new Installation(new File(baseUnityPath(),"Unity-${installedUnityVersions().first()}"), installedUnityVersions().first())
+        preInstalledUnity2018_4_19f1.version                    | "when version is installed"     | preInstalledUnity2018_4_19f1
         "1.1.1f1"                        | "when version is not installed" | null
         "2018.0.1"                       | "when version is invalid"       | null
 
@@ -153,7 +131,7 @@ class UnityVersionManagerSpec extends Specification {
     @Unroll
     def "listInstallations returns list of installed versions"() {
         given: "some installed versions"
-        def v = installedUnityVersions()
+        def v = preInstalledUnity2018_4_19f1.version
 
         when: "fetch installations"
         def installations = UnityVersionManager.listInstallations()
@@ -275,7 +253,7 @@ class UnityVersionManagerSpec extends Specification {
 
     def "returns unity version at location"() {
         given: "a installation"
-        def installation = UnityVersionManager.listInstallations().first()
+        def installation = preInstalledUnity2018_4_19f1
         assert installation
 
         when:
