@@ -191,6 +191,7 @@ pipeline {
               }
 
               steps {
+                echo "skip"
                 //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
 
