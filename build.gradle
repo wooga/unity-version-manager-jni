@@ -50,6 +50,7 @@ dependencies {
 
     testCompile "org.codehaus.groovy:groovy-all:2.4.15"
     testCompile "org.spockframework:spock-core:1.2-groovy-2.4"
+    testCompile "com.wooga.spock.extensions:spock-unity-version-manager-extension:0.1.0"
 }
 
 task collectLibs() {

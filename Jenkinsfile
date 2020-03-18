@@ -50,7 +50,7 @@ pipeline {
       parallel {
         stage('osx') {
           agent {
-            label "osx && atlas && primary && unity && fast"
+            label "osx && atlas && primary && fast"
           }
 
           stages {
