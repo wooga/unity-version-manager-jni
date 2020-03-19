@@ -9,7 +9,7 @@ jni = "0.15.0"
 uvm-install2 = "0.4.0"
 error-chain = "0.12.2"
 log = "0.4.8"
-flexi_logger = "0.14.4"
+flexi_logger = "0.15.1"
 
 [lib]
 crate-type = ["cdylib"]
