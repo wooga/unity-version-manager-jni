@@ -777,7 +777,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "jni"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cesu8 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1960,7 +1960,7 @@ version = "0.2.0"
 dependencies = [
  "error-chain 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "flexi_logger 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "jni 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jni 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "uvm-install2 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2204,7 +2204,7 @@ dependencies = [
 "checksum iovec 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "b2b3ea6ff95e175473f8ffe6a7eb7c00d054240321b84c57051175fe3c1e075e"
 "checksum itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f56a2d0bc861f9165be4eb3442afd3c236d8a98afd426f65d92324ae1091a484"
 "checksum itoa 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)" = "b8b7a7c0c47db5545ed3fef7468ee7bb5b74691498139e4b3f6a20685dc6dd8e"
-"checksum jni 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4ba3cd65bd48a02c50381dc90678744e1cc9842d0c957bf5a4660618df10a0c2"
+"checksum jni 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "22bbdc25b49340bc4fc3d9c96dd84d878c4beeca35e3651efa53db51a68d7d4d"
 "checksum jni-sys 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8eaf4bc02d17cbdd7ff4c7438cafcdf7fb9a4613313ad11b4f8fefe7d3fa0130"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
