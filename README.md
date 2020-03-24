@@ -1,7 +1,7 @@
 unity-version-manager-jni
 =========================
 
-This project consists of a simple java native interface for the [unity-version-manager].
+This project consists of a simple java native interface for the [unity-version-manager](https://github.com/Larusso/unity-version-manager).
 
 This repo holds two components:
 
@@ -20,7 +20,7 @@ Java
 ----
 
 The java library part simply loads the compiled native library based on the platform and provides a static interface to some
-of the features provided by [unity-version-manager].
+of the features provided by [unity-version-manager](https://github.com/Larusso/unity-version-manager).
 
 
 Compile
