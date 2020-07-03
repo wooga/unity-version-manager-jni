@@ -22,7 +22,7 @@ plugins {
     id 'com.jfrog.bintray' version '1.8.4'
     id 'nebula.release' version '6.3.5'
     id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.8.2'
+    id 'com.github.kt3k.coveralls' version '2.10.1'
 }
 
 group "net.wooga"
