@@ -41,6 +41,8 @@ public class UnityVersionManager {
 
     /**
      * Returns the uvm core library version.
+     *
+     * @return the uvm core library version
      */
     public static native String uvmVersion();
 
