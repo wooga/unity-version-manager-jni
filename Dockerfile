@@ -1,5 +1,6 @@
 FROM openjdk:8-jdk
-
+ARG RUST_VERSION=1.50.0
+ARG UVM_VERSION=2.2.0
 
 RUN mkdir -p /home/ci
 
@@ -16,16 +17,15 @@ ENV IN_DOCKER="1"
 RUN apt-get update
 RUN apt-get install -y  build-essential libssl-dev pkg-config openssl p7zip-full cpio -y
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain $RUST_VERSION
 ENV PATH="${HOME}/.cargo/bin:${PATH}"
 
 WORKDIR /home/ci/
 
-RUN curl -Lo unity-version-manager-2.2.0.tar.gz https://github.com/Larusso/unity-version-manager/archive/v2.2.0.tar.gz && \
-    tar -xzf unity-version-manager-2.2.0.tar.gz && \
-    cd unity-version-manager-2.2.0 && make install && \
-    uvm install 2019.1.0a7 /home/ci/.local/share/Unity-2019.1.0a7
+RUN curl -Lo "unity-version-manager-$UVM_VERSION.tar.gz" "https://github.com/Larusso/unity-version-manager/archive/v$UVM_VERSION.tar.gz"
+RUN tar -xzf "unity-version-manager-$UVM_VERSION.tar.gz"
+RUN cd "unity-version-manager-$UVM_VERSION" && make install
+RUN uvm install 2019.1.0a7 /home/ci/.local/share/Unity-2019.1.0a7
 
 # Chown all the files to the app user.
 RUN chown -R ci:ci $HOME
