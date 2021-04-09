@@ -19,10 +19,12 @@ plugins {
     id 'java-library'
     id 'groovy'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.8.4'
-    id 'nebula.release' version '6.3.5'
+    id 'signing'
+    id 'nebula.release' version '15.2.0'
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
+    id 'io.codearte.nexus-staging' version '0.22.0'
+    id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 }
 
 group "net.wooga"
@@ -41,8 +43,8 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -50,7 +52,7 @@ dependencies {
 
     testCompile "org.codehaus.groovy:groovy-all:2.4.15"
     testCompile "org.spockframework:spock-core:1.2-groovy-2.4"
-    testCompile "com.wooga.spock.extensions:spock-unity-version-manager-extension:0.1.0"
+    testCompile "com.wooga.spock.extensions:spock-unity-version-manager-extension:[0.1.0,1)"
 }
 
 task collectLibs() {
@@ -76,62 +78,15 @@ sourceSets.main.resources {
 
 processResources.dependsOn(collectLibs)
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
     from sourceSets.main.allSource
 }
 
 javadoc.failOnError = false
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
-
-
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintray.user') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintray.key') : System.getenv('BINTRAY_API_KEY')
-    publish = true
-    publications = ['Bintray']
-    pkg {
-        repo = 'maven'
-        name = project.name
-        userOrg = 'wooga'
-        licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/wooga/unity-version-manager-jni.git'
-        labels = ['unity', 'jni', 'unity version manager']
-        version {
-            name = project.version.toString()
-            vcsTag = project.version.toString()
-            released = new Date()
-        }
-    }
-}
-
-def pomConfig = {
-    licenses {
-        license {
-            name "The Apache Software License, Version 2.0"
-            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution "repo"
-        }
-    }
-    developers {
-        developer {
-            id "manfred.endres"
-            name "Manfred Endres"
-            email "manfred.endres@wooga.net"
-        }
-    }
-
-    scm {
-        url "https://github.com/wooga/unity-version-manager-jni"
-    }
+task javadocJar(type: Jar) {
+    archiveClassifier.set('javadoc')
+    from javadoc
 }
 
 jacocoTestReport {
@@ -141,29 +96,81 @@ jacocoTestReport {
     }
 }
 
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
 publishing {
     publications {
-        Bintray(MavenPublication) {
-            from components.java
+        main(MavenPublication) {
+            artifactId = project.name
+            from(components["java"])
             artifact sourcesJar {
                 classifier "sources"
             }
             artifact javadocJar {
                 classifier "javadoc"
             }
+            pom {
+                name = 'Unity Version Manager JNI'
+                description = 'A JNI library to execute unity version manager from java.'
+                url = 'https://github.com/wooga/unity-version-manager-jni'
 
-            groupId 'net.wooga'
-            artifactId 'unity-version-manager-jni'
-            version project.version.toString()
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('description', 'A JNI library to execute unity version manager from java.')
-                root.appendNode('name', 'Unity Version Manager JNI')
-                root.appendNode('url', 'https://github.com/thombergs/myAwesomeLib')
-                root.children().last() + pomConfig
+                artifactId = project.name
+                inceptionYear = "2018"
+
+                scm {
+                    connection = 'scm:git:https://github.com/wooga/unity-version-manager-jni.git'
+                    developerConnection = 'scm:git:https://github.com/wooga/unity-version-manager-jni.git'
+                    url = 'https://github.com/wooga/unity-version-manager-jni.git'
+                }
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'manfred.endres'
+                        name = 'Manfred Endres'
+                        email = 'manfred.endres@wooga.net'
+                    }
+                }
             }
         }
     }
 }
 
-[finalSetup, candidateSetup, snapshotSetup].each { it.dependsOn(build)}
+nexusPublishing {
+    repositories {
+        sonatype {  //only for users registered in Sonatype after 24 Feb 2021
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username = project.hasProperty('ossrhUsername') ? project.property('ossrhUsername') : System.getenv('OSSRH_USERNAME')
+            password = project.hasProperty('ossrhPassword') ? project.property('ossrhPassword') : System.getenv('OSSRH_PASSWORD')
+        }
+    }
+}
+
+signing {
+    def signingKeyId = project.hasProperty("signingKeyId") ? project.property('signingKeyId') : System.getenv('OSSRH_SIGNING_KEY_ID')
+    def signingKey = project.hasProperty("signingKey") ? project.property('signingKey') : System.getenv('OSSRH_SIGNING_KEY')
+    def signingPassword = project.hasProperty('signingPassphrase') ? project.property('signingPassphrase') : System.getenv("OSSRH_SIGNING_PASSPHRASE")
+    useInMemoryPgpKeys(signingKeyId.toString(), signingKey.toString(), signingPassword.toString())
+    sign publishing.publications.main
+}
+
+postRelease.dependsOn(tasks.publish)
+
+afterEvaluate {
+    tasks."final".dependsOn(tasks.publishToSonatype, tasks.closeSonatypeStagingRepository) //, tasks.closeAndReleaseSonatypeStagingRepository)
+    tasks."candidate".dependsOn(tasks.publishToSonatype, tasks.closeSonatypeStagingRepository) //,tasks.closeAndReleaseSonatypeStagingRepository)
+    tasks.publishToSonatype.mustRunAfter(tasks.postRelease)
+    tasks.closeSonatypeStagingRepository.mustRunAfter(tasks.publishToSonatype)
+    //tasks.closeAndReleaseSonatypeStagingRepository.mustRunAfter(tasks.publishToSonatype)
+    tasks.publish.mustRunAfter(tasks.release)
+}

@@ -17,47 +17,26 @@
 
 plugins {
     id 'base'
-    id "org.ysb33r.rust.lib" version "0.2"
+    id "net.wooga.rust.lib" version "0.1.0"
 }
 
 rust {
-    if(System.getProperty("os.name").toLowerCase().contains("windows")
-        || System.getenv("IN_DOCKER") != null) {
-        executable(searchPath())
-    } else {
-        executable version : '1.50.0'
-    }
-
-    cargoToml './Cargo.toml'
-    useCargoSourceLayout()
+    useLocalInstallation(provider({
+        System.getProperty("os.name").toLowerCase().contains("windows")
+    }))
+    version.set("1.50.0")
+    patchCargoVersion(true)
 }
 
 compileLibRust {
-    options {
-        release = true
-        veryVerbose = true
-    }
-}
-
-processRustSource {
-    doLast {
-        println("override Cargo.toml")
-        copy {
-            from projectDir
-            include "Cargo.toml"
-            into file("${buildDir}/rust-project")
-        }
-
-        println("replace version")
-        ant.replaceregexp(file: "${buildDir}/rust-project/Cargo.toml", match: '^version\\s=.*$', replace:"version = \"${project.version}\"", byline: true)
-    }
+    release(true)
 }
 
 configurations {
     rustLib
 }
 
-task copyOut(type:Copy) {
+task copyOut(type: Copy) {
     dependsOn compileLibRust
 
     from file("${buildDir}/rust-project/target/release/")

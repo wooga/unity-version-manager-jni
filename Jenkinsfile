@@ -194,25 +194,6 @@ pipeline {
                 echo "skip"
                 //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
               }
-
-//              post {
-//                success {
-//                  gradleWrapper "jacocoTestReport coveralls"
-//                  publishHTML([
-//                    allowMissing: true,
-//                    alwaysLinkToLastBuild: true,
-//                    keepAll: true,
-//                    reportDir: 'build/reports/jacoco/test/html',
-//                    reportFiles: 'index.html',
-//                    reportName: 'Coverage',
-//                    reportTitles: ''
-//                    ])
-//                }
-//
-//                always {
-//                  junit allowEmptyResults: true, testResults: '**/build/test-results/**/*.xml'
-//                }
-//              }
             }
           }
         }
@@ -221,7 +202,7 @@ pipeline {
 
     stage('assemble final jar') {
       agent {
-        label "osx && atlas && primary"
+        label "unix && atlas"
       }
 
       steps {
@@ -243,32 +224,33 @@ pipeline {
     }
 
     stage('publish') {
-      when {
-        beforeAgent true
-        expression {
-          return params.RELEASE_TYPE != "SNAPSHOT"
-        }
-      }
-
       agent {
-        label "osx && atlas"
+        label "unix && atlas"
       }
 
       environment {
-        BINTRAY               = credentials('bintray.publish')
-        GRGIT                 = credentials('github_up')
-
-        BINTRAY_USER          = "${BINTRAY_USR}"
-        BINTRAY_API_KEY       = "${BINTRAY_PSW}"
-        GRGIT_USER            = "${GRGIT_USR}"
-        GRGIT_PASS            = "${GRGIT_PSW}"
-        GITHUB_LOGIN          = "${GRGIT_USR}"
-        GITHUB_PASSWORD       = "${GRGIT_PSW}"
+        OSSRH = credentials('ossrh.publish')
+        OSSRH_SIGNING_KEY = credentials('ossrh.signing.key')
+        OSSRH_SIGNING_KEY_ID = credentials('ossrh.signing.key_id')
+        OSSRH_SIGNING_PASSPHRASE = credentials('ossrh.signing.passphrase')
+        OSSRH_USERNAME = "${OSSRH_USR}"
+        OSSRH_PASSWORD = "${OSSRH_PSW}"
+        GRGIT = credentials('github_up')
+        GRGIT_USER = "${GRGIT_USR}"
+        GRGIT_PASS = "${GRGIT_PSW}"
+        GITHUB_LOGIN = "${GRGIT_USR}"
+        GITHUB_PASSWORD = "${GRGIT_PSW}"
       }
 
       steps {
         unstash("final_build")
-        gradleWrapper "${params.RELEASE_TYPE.trim().toLowerCase()} -Pbintray.user=${BINTRAY_USER} -Pbintray.key=${BINTRAY_API_KEY} -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE} -x check"
+        gradleWrapper "--info ${params.RELEASE_TYPE.trim()} -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE} -x check"
+      }
+
+      post {
+        cleanup {
+          cleanWs()
+        }
       }
     }
   }
