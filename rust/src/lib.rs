@@ -1,6 +1,6 @@
 use flexi_logger::{default_format, Logger};
 use jni::objects::{JClass, JObject, JString, JValue};
-use jni::sys::{jint, jobject, jobjectArray, jsize, jstring};
+use jni::sys::{jint, jobject, jobjectArray, jsize, jstring, jboolean};
 use jni::JNIEnv;
 use log::*;
 use std::collections::HashSet;
@@ -324,6 +324,7 @@ fn install_unity_editor(
     version: JString,
     destination: Option<JObject>,
     components: Option<jobjectArray>,
+    syncModules: bool
 ) -> error::UvmJniResult<jobject> {
     let version = env.get_string(version)?;
     let version: String = version.into();
@@ -350,7 +351,7 @@ fn install_unity_editor(
         None
     };
 
-    let installation = uvm_install2::install(&version, variants, true, destination.as_ref())?;
+    let installation = uvm_install2::install(&version, variants, syncModules, destination.as_ref())?;
     let native_installation = jni_utils::get_installation(&env, &installation)?;
     Ok(native_installation.into_inner())
 }
@@ -364,7 +365,7 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor
     destination: JObject,
 ) -> jobject {
     start_logger();
-    install_unity_editor(&env, version, Some(destination), None)
+    install_unity_editor(&env, version, Some(destination), None, false)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
@@ -376,7 +377,7 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor
     version: JString,
 ) -> jobject {
     start_logger();
-    install_unity_editor(&env, version, None, None)
+    install_unity_editor(&env, version, None, None, false)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
@@ -389,7 +390,7 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor
     components: jobjectArray,
 ) -> jobject {
     start_logger();
-    install_unity_editor(&env, version, None, Some(components))
+    install_unity_editor(&env, version, None, Some(components), false)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 
@@ -403,7 +404,22 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor
     components: jobjectArray,
 ) -> jobject {
     start_logger();
-    install_unity_editor(&env, version, Some(destination), Some(components))
+    install_unity_editor(&env, version, Some(destination), Some(components), false)
+        .unwrap_or_else(jni_utils::print_error_and_return_null)
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_installUnityEditor__Ljava_lang_String_2Ljava_io_File_2_3Lnet_wooga_uvm_Component_2Z(
+    env: JNIEnv,
+    _class: JClass,
+    version: JString,
+    destination: JObject,
+    components: jobjectArray,
+    syncModules: jboolean
+) -> jobject {
+    start_logger();
+    install_unity_editor(&env, version, Some(destination), Some(components), syncModules != 0)
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }
 

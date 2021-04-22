@@ -119,6 +119,21 @@ public class UnityVersionManager {
      */
     public static native Installation installUnityEditor(String version, File destination, Component[] components);
 
+    /**
+     * Installs the given version of unity and additional components to destination.
+     *
+     * If the unity version and all requested components are already installed, returns early.
+     *
+     * @param version the version of unity to install
+     * @param destination the location to install unity to
+     * @param components a list of optional {@code Component}s to install
+     * @param syncModules installs all optional modules for selected components
+     *
+     * @return a {@code Installation} object or null
+     * @see Component
+     * @see Installation
+     */
+    public static native Installation installUnityEditor(String version, File destination, Component[] components, boolean syncModules);
 
     /**
      * Return the version as {@code String} of the unity installation at the provided location or {@code Null}.
