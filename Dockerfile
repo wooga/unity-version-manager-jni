@@ -10,6 +10,8 @@ RUN groupadd -r ci &&\
 
 # Set the home directory to our app user's home.
 ENV HOME=/home/ci
+ENV GRADLE_USER_HOME=$HOME/.gradle
+ENV _JAVA_OPTIONS="-Duser.home=$HOME"
 ENV RUST_BACKTRACE=1
 ENV RUST_LOG="warning, uvm_core=trace, uvm_jni=trace"
 ENV IN_DOCKER="1"

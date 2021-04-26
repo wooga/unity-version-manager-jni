@@ -58,7 +58,7 @@ pipeline {
           stages {
             stage('assemble') {
               steps {
-                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
               }
 
               post {
@@ -81,7 +81,7 @@ pipeline {
               }
 
               steps {
-                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
               }
 
               post {
@@ -114,7 +114,7 @@ pipeline {
           stages {
             stage('assemble') {
               steps {
-                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
               }
 
               post {
@@ -137,7 +137,7 @@ pipeline {
               }
 
               steps {
-                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
               }
 
               post {
@@ -170,7 +170,7 @@ pipeline {
           stages {
             stage('assemble') {
               steps {
-                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
               }
 
               post {
@@ -194,7 +194,7 @@ pipeline {
 
               steps {
                 echo "skip"
-                //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+                //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
               }
             }
           }
@@ -214,7 +214,7 @@ pipeline {
 
         sh "ls rust/build/output"
 
-        gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE}"
+        gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
       }
 
       post {
@@ -246,7 +246,7 @@ pipeline {
 
       steps {
         unstash("final_build")
-        gradleWrapper "--info ${params.RELEASE_TYPE.trim()} -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE} -x check -x :rust:copyOut -x :rust:assemble"
+        gradleWrapper "--info ${params.RELEASE_TYPE.trim()} -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''} -x check -x :rust:copyOut -x :rust:assemble"
       }
 
       post {
