@@ -244,7 +244,7 @@ pipeline {
 
       steps {
         unstash("final_build")
-        gradleWrapper "--info ${params.RELEASE_TYPE.trim()} -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE} -x check"
+        gradleWrapper "--info ${params.RELEASE_TYPE.trim()} -Prelease.stage=${params.RELEASE_TYPE.trim()} -Prelease.scope=${params.RELEASE_SCOPE} -x check -x :rust:copyOut -x :rust:assemble"
       }
 
       post {
