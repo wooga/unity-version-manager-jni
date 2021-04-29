@@ -167,10 +167,9 @@ signing {
 postRelease.dependsOn(tasks.publish)
 
 afterEvaluate {
-    tasks."final".dependsOn(tasks.publishToSonatype, tasks.closeSonatypeStagingRepository) //, tasks.closeAndReleaseSonatypeStagingRepository)
-    tasks."candidate".dependsOn(tasks.publishToSonatype, tasks.closeSonatypeStagingRepository) //,tasks.closeAndReleaseSonatypeStagingRepository)
+    tasks."final".dependsOn(tasks.publishToSonatype, tasks.closeAndReleaseSonatypeStagingRepository)
+    tasks."candidate".dependsOn(tasks.publishToSonatype, tasks.closeAndReleaseSonatypeStagingRepository)
     tasks.publishToSonatype.mustRunAfter(tasks.postRelease)
     tasks.closeSonatypeStagingRepository.mustRunAfter(tasks.publishToSonatype)
-    //tasks.closeAndReleaseSonatypeStagingRepository.mustRunAfter(tasks.publishToSonatype)
     tasks.publish.mustRunAfter(tasks.release)
 }
