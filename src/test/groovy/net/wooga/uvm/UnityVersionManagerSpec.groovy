@@ -97,6 +97,7 @@ class UnityVersionManagerSpec extends Specification {
     }
 
     static String OS = System.getProperty("os.name").toLowerCase()
+
     static boolean isWindows() {
         return (OS.indexOf("win") >= 0)
     }
@@ -110,7 +111,7 @@ class UnityVersionManagerSpec extends Specification {
     }
 
     @Shared
-    @UnityInstallation(version="2018.4.19f1", basePath = "build/unity", cleanup = true)
+    @UnityInstallation(version = "2018.4.19f1", basePath = "build/unity", cleanup = true)
     Installation preInstalledUnity2018_4_19f1
 
     @Unroll
@@ -119,11 +120,11 @@ class UnityVersionManagerSpec extends Specification {
         UnityVersionManager.locateUnityInstallation(version) == expectedResult
 
         where:
-        version                          | reason                          | expectedResult
-        null                             | "version is null"               | null
-        preInstalledUnity2018_4_19f1.version                    | "when version is installed"     | preInstalledUnity2018_4_19f1
-        "1.1.1f1"                        | "when version is not installed" | null
-        "2018.0.1"                       | "when version is invalid"       | null
+        version                              | reason                          | expectedResult
+        null                                 | "version is null"               | null
+        preInstalledUnity2018_4_19f1.version | "when version is installed"     | preInstalledUnity2018_4_19f1
+        "1.1.1f1"                            | "when version is not installed" | null
+        "2018.0.1"                           | "when version is invalid"       | null
 
         resultMessage = expectedResult ? "the unity location" : "null"
     }
@@ -169,7 +170,7 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @IgnoreIf({ env.containsKey("CI") })
     def "installUnityEditor installs unity to default location"() {
         given: "a version to install"
         def version = "2019.3.0a5"
@@ -191,7 +192,7 @@ class UnityVersionManagerSpec extends Specification {
 
     def "installUnityEditor installs unity and components to location"() {
         given: "a version to install"
-        def version = "2019.3.0a5"
+        def version = "2019.4.24f1"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         and: "a temp install location"
@@ -217,6 +218,10 @@ class UnityVersionManagerSpec extends Specification {
         playbackEngines.exists()
         new File(playbackEngines, "iOSSupport").exists()
         new File(playbackEngines, "AndroidPlayer").exists()
+        //does not install optional modules
+        !new File(playbackEngines, "AndroidPlayer/NDK").exists()
+        !new File(playbackEngines, "AndroidPlayer/SDK").exists()
+        !new File(playbackEngines, "AndroidPlayer/OpenJDK").exists()
         def installation = UnityVersionManager.locateUnityInstallation(version)
         installation.location.absolutePath == result.location.absolutePath
 
@@ -224,7 +229,60 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @Unroll
+    def "installUnityEditor installs unity and components #message to location"() {
+        given: "a version to install"
+        def version = "2019.4.24f1"
+        assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        and: "a temp install location"
+        def basedir = Files.createTempDirectory(buildDir.toPath(), "installUnityEditor_with_components").toFile()
+        def destination = new File(basedir, version)
+        assert !destination.exists()
+
+        and: "no engines"
+        def playbackEnginesPath = (isWindows() || isLinux()) ? "Editor/Data/PlaybackEngines" : "PlaybackEngines"
+        def playbackEngines = new File(destination, playbackEnginesPath)
+        assert !playbackEngines.exists()
+
+        and: "Optional Android modules"
+        def ndkModulePath = new File(playbackEngines, "AndroidPlayer/NDK")
+        def sdkModulePath = new File(playbackEngines, "AndroidPlayer/SDK")
+        def openJDKModulePath = new File(playbackEngines, "AndroidPlayer/OpenJDK")
+
+        assert !ndkModulePath.exists()
+        assert !sdkModulePath.exists()
+        assert !openJDKModulePath.exists()
+
+        when:
+        def result = UnityVersionManager.installUnityEditor(version, destination, [Component.android].toArray() as Component[], syncModules)
+
+        then:
+        result != null
+        result.location.exists()
+        result.location.absolutePath == destination.absolutePath
+        result.version == version
+
+        destination.exists()
+        playbackEngines.exists()
+
+        new File(playbackEngines, "AndroidPlayer").exists()
+        ndkModulePath.exists() == syncModules
+        sdkModulePath.exists() == syncModules
+        openJDKModulePath.exists() == syncModules
+
+        def installation = UnityVersionManager.locateUnityInstallation(version)
+        installation.location.absolutePath == result.location.absolutePath
+
+        cleanup:
+        destination.deleteDir()
+
+        where:
+        syncModules << [true, false]
+        message = syncModules ? "all optional modules when syncModules = true" : "no optional modules when syncModules = false"
+    }
+
+    @IgnoreIf({ env.containsKey("CI") })
     def "installUnityEditor installs unity and components to default location"() {
 
 
