@@ -52,7 +52,7 @@ pipeline {
       parallel {
         stage('osx') {
           agent {
-            label "osx && atlas && primary && fast"
+            label "macos && atlas"
           }
 
           stages {
@@ -100,6 +100,10 @@ pipeline {
 
                 always {
                   junit allowEmptyResults: true, testResults: '**/build/test-results/**/*.xml'
+                }
+
+                cleanup {
+                    cleanWs()
                 }
               }
             }
@@ -157,6 +161,10 @@ pipeline {
                 always {
                   junit allowEmptyResults: true, testResults: '**/build/test-results/**/*.xml'
                 }
+
+                cleanup {
+                  cleanWs()
+                }
               }
             }
           }
@@ -195,6 +203,12 @@ pipeline {
               steps {
                 echo "skip"
                 //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
+              }
+
+              post {
+                cleanup {
+                  cleanWs()
+                }
               }
             }
           }

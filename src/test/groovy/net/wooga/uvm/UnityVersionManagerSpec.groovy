@@ -25,6 +25,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
+import java.util.concurrent.ForkJoinPool
 
 class UnityVersionManagerSpec extends Specification {
 
@@ -222,6 +223,30 @@ class UnityVersionManagerSpec extends Specification {
 
         cleanup:
         destination.deleteDir()
+    }
+
+    def "locks process when a different process is installing the same version"() {
+        given: "a version to install"
+        def version = "2019.3.0a5"
+        assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        and:
+        def threads = ["2019.3.0a5", "2019.3.0a5"].collect { v ->
+            Thread.start({
+                UnityVersionManager.installUnityEditor(v)
+            })
+        }
+
+        when:
+        threads*.join()
+
+        then:
+        noExceptionThrown()
+        UnityVersionManager.locateUnityInstallation(version) != null
+
+        cleanup:
+        UnityVersionManager.locateUnityInstallation(version).location.deleteDir()
+
     }
 
     @IgnoreIf({env.containsKey("CI")})
