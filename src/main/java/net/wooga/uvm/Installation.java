@@ -17,22 +17,11 @@
 
 package net.wooga.uvm;
 
-import cz.adamh.utils.NativeUtils;
-
 import java.io.File;
-import java.io.IOException;
-import java.util.logging.Logger;
 
 public class Installation {
-
-    private final static Logger logger = Logger.getLogger(Installation.class.getName());
-
     static {
-        try {
-            NativeUtils.loadLibraryFromJar("/native/" + System.mapLibraryName("uvm_jni"));
-        } catch (IOException e) {
-            logger.warning("unable to load native library: " + System.mapLibraryName("uvm_jni"));
-        }
+        NativeLoader.loadLibrary(Installation.class.getClassLoader(), System.mapLibraryName("uvm_jni"));
     }
 
     private File location;

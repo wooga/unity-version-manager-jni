@@ -18,7 +18,6 @@
 package net.wooga.uvm
 
 import com.wooga.spock.extensions.uvm.UnityInstallation
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
@@ -222,6 +221,30 @@ class UnityVersionManagerSpec extends Specification {
 
         cleanup:
         destination.deleteDir()
+    }
+
+    def "locks process when a different process is installing the same version"() {
+        given: "a version to install"
+        def version = "2019.3.0a5"
+        assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        and:
+        def threads = ["2019.3.0a5", "2019.3.0a5"].collect { v ->
+            Thread.start({
+                UnityVersionManager.installUnityEditor(v)
+            })
+        }
+
+        when:
+        threads*.join()
+
+        then:
+        noExceptionThrown()
+        UnityVersionManager.locateUnityInstallation(version) != null
+
+        cleanup:
+        UnityVersionManager.locateUnityInstallation(version).location.deleteDir()
+
     }
 
     @IgnoreIf({env.containsKey("CI")})

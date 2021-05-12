@@ -73,7 +73,7 @@ tasks.withType(JavaCompile) {
 }
 
 sourceSets.main.resources {
-    srcDir(file("${buildDir}/rustLibs"))
+    srcDir(file("${buildDir}/rustLibs/native"))
 }
 
 processResources.dependsOn(collectLibs)
