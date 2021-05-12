@@ -17,11 +17,7 @@
 
 package net.wooga.uvm;
 
-import cz.adamh.utils.NativeUtils;
-
 import java.io.File;
-import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * This is a simple native interface for the {@code unity version manager} tool.
@@ -29,14 +25,8 @@ import java.util.logging.Logger;
  */
 public class UnityVersionManager {
 
-    private final static Logger logger = Logger.getLogger(UnityVersionManager.class.getName());
-
     static {
-        try {
-            NativeUtils.loadLibraryFromJar("/native/" + System.mapLibraryName("uvm_jni"));
-        } catch (IOException e) {
-            logger.warning("unable to load native library: " + System.mapLibraryName("uvm_jni"));
-        }
+        NativeLoader.loadLibrary(UnityVersionManager.class.getClassLoader(), System.mapLibraryName("uvm_jni"));
     }
 
     /**
@@ -71,10 +61,10 @@ public class UnityVersionManager {
 
     /**
      * Installs the given version of unity to destination.
-     *
+     * <p>
      * If the unity version is already installed, returns early.
      *
-     * @param version the version of unity to install
+     * @param version     the version of unity to install
      * @param destination the location to install unity to
      * @return a {@code Installation} object or null
      */
@@ -82,7 +72,7 @@ public class UnityVersionManager {
 
     /**
      * Installs the given version of unity to default destination.
-     *
+     * <p>
      * If the unity version is already installed, returns early.
      *
      * @param version the version of unity to install
@@ -92,12 +82,11 @@ public class UnityVersionManager {
 
     /**
      * Installs the given version of unity and additional components to default destination.
-     *
+     * <p>
      * If the unity version and all requested components are already installed, returns early.
      *
-     * @param version the version of unity to install
+     * @param version    the version of unity to install
      * @param components a list of optional {@code Component}s to install
-     *
      * @return a {@code Installation} object or null
      * @see Component
      * @see Installation
@@ -106,13 +95,12 @@ public class UnityVersionManager {
 
     /**
      * Installs the given version of unity and additional components to destination.
-     *
+     * <p>
      * If the unity version and all requested components are already installed, returns early.
      *
-     * @param version the version of unity to install
+     * @param version     the version of unity to install
      * @param destination the location to install unity to
-     * @param components a list of optional {@code Component}s to install
-     *
+     * @param components  a list of optional {@code Component}s to install
      * @return a {@code Installation} object or null
      * @see Component
      * @see Installation
@@ -128,7 +116,7 @@ public class UnityVersionManager {
      */
     public static String readUnityVersion(File installationLocation) {
         Installation installation = Installation.atLocation(installationLocation);
-        if(installation != null) {
+        if (installation != null) {
             return installation.getVersion();
         }
         return null;

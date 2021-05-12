@@ -18,14 +18,12 @@
 package net.wooga.uvm
 
 import com.wooga.spock.extensions.uvm.UnityInstallation
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
-import java.util.concurrent.ForkJoinPool
 
 class UnityVersionManagerSpec extends Specification {
 
