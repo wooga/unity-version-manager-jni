@@ -1,0 +1,42 @@
+version: 2
+registries:
+  maven-repository-wooga-jfrog-io-wooga-atlas-maven:
+    type: maven-repository
+    url: https://wooga.jfrog.io/wooga/atlas-maven
+    username: atlas
+    password: "${{secrets.MAVEN_REPOSITORY_WOOGA_JFROG_IO_WOOGA_ATLAS_MAVEN_PASSWORD}}"
+
+updates:
+- package-ecosystem: cargo
+  directory: "/rust"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+- package-ecosystem: gradle
+  directory: "/rust"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  registries:
+  - maven-repository-wooga-jfrog-io-wooga-atlas-maven
+- package-ecosystem: gradle
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: org.codehaus.groovy:groovy-all
+    versions:
+    - "> 2.4.15"
+  - dependency-name: com.github.kt3k.coveralls
+    versions:
+    - 2.10.2
+    - 2.11.0
+  - dependency-name: com.jfrog.bintray
+    versions:
+    - 1.8.5
+  registries:
+  - maven-repository-wooga-jfrog-io-wooga-atlas-maven
