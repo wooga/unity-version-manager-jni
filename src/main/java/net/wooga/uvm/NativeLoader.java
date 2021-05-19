@@ -32,7 +32,7 @@ public class NativeLoader {
 	private static String libFilename(String libName) {
 		String osName = System.getProperty("os.name").toLowerCase();
 		if (osName.indexOf("win") >= 0) {
-			return libName + ".dll";
+			return decorateLibraryName(libName,".dll");
 		} else if (osName.indexOf("mac") >= 0) {
 			return decorateLibraryName(libName, ".dylib");
 		}
