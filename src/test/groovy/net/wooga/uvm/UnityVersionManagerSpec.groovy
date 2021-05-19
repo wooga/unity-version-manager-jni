@@ -223,6 +223,7 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
+    @IgnoreIf({env.containsKey("CI")})
     def "locks process when a different process is installing the same version"() {
         given: "a version to install"
         def version = "2019.3.0a5"
