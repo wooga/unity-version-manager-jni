@@ -218,7 +218,7 @@ pipeline {
 
     stage('assemble final jar') {
       agent {
-        label "unix && atlas"
+        label "macos && atlas"
       }
 
       steps {
@@ -228,7 +228,7 @@ pipeline {
 
         sh "ls rust/build/output"
 
-        gradleWrapper "assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
+        gradleWrapper "assemble -x :rust:assemble -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
       }
 
       post {
@@ -241,7 +241,7 @@ pipeline {
 
     stage('publish') {
       agent {
-        label "unix && atlas"
+        label "macos && atlas"
       }
 
       environment {
