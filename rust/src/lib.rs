@@ -314,6 +314,10 @@ impl From<jint> for Variant {
             39 => Variant(FacebookGames),
             40 => Variant(FacebookGameRoom),
             41 => Variant(Lumin),
+            42 => Variant(LinuxIL2CPP),
+            43 => Variant(LinuxServer),
+            44 => Variant(MacServer),
+            45 => Variant(WindowsServer),
             _ => Variant(Unknown),
         }
     }
