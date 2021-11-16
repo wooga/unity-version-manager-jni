@@ -2213,9 +2213,9 @@ dependencies = [
 
 [[package]]
 name = "uvm-install2"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f6f2f783e8c79c454201559afee261bf6790026ae62ba3fc3d5412063cf15d5"
+checksum = "46b77e55b273875e5aa331509ca89d894e40523b2a02cafc27ae1d069b30249c"
 dependencies = [
  "console 0.9.2",
  "dirs-2",
@@ -2233,9 +2233,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_cli"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ba2a423c675e0d03b119647c72eccf5a307b104fe143885ba987c77d4b168ad"
+checksum = "b8631beea5751a944a220156937c8413d0bc6169c2d658b5d88211f2343307b4"
 dependencies = [
  "cli_core",
  "console 0.9.2",
@@ -2250,9 +2250,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_core"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b58411a0b4079d1ace9984328c4065261c0d88bc05cdf6b98070bfd934e74d01"
+checksum = "dd01ce9932355574a79e966ab9a9a6a279c9aae1e26c6106b72ab9cacebf4353"
 dependencies = [
  "cfg-if 1.0.0",
  "cluFlock",
@@ -2284,9 +2284,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_install_core"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d988893f62e3a36ad5198e36dc5c0c68e121560f96d067a98b34a1ccf32f63a"
+checksum = "c96d4c42b9e4bf90d571cd16e97b75afd11f7a9930ebc96f46e6d5a45c6520c4"
 dependencies = [
  "cfg-if 1.0.0",
  "derive_deref",
@@ -2305,9 +2305,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_install_graph"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7d5d4dbbc5f4176e64e6ba8e4fa972a5f3058381094447a79345b7e3c812012"
+checksum = "cd573c7916235ed71a33d335d6e2ea272fb91eb4c3f68b7d18c36f6f05d81597"
 dependencies = [
  "daggy",
  "fixedbitset",
