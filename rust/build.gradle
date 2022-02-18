@@ -24,7 +24,7 @@ rust {
     useLocalInstallation(provider({
         System.getProperty("os.name").toLowerCase().contains("windows")
     }))
-    version.set("1.50.0")
+    version.set("1.58.1")
     patchCargoVersion(true)
 }
 
