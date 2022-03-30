@@ -17,14 +17,14 @@
 
 plugins {
     id 'base'
-    id "net.wooga.rust.lib" version "0.1.0"
+    id "net.wooga.rust.lib" version "0.3.0-rc.1"
 }
 
 rust {
     useLocalInstallation(provider({
         System.getProperty("os.name").toLowerCase().contains("windows")
     }))
-    version.set("1.58.1")
+    version.set("1.59.0")
     patchCargoVersion(true)
 }
 
