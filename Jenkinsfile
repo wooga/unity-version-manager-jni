@@ -36,6 +36,9 @@ pipeline {
   environment {
     CI = true
     RUST_LOG = "warn,uvm_core=trace,uvm_move_dir=trace,uvm_install2=trace,uvm_jni=trace"
+    SNYK_TOKEN = credentials('snyk-wdk-token')
+    SNYK_AUTO_DOWNLOAD = "YES"
+    SNYK_ORG_NAME = "wooga-pipeline"
   }
 
   stages {
@@ -86,7 +89,7 @@ pipeline {
 
               post {
                 success {
-                  gradleWrapper "jacocoTestReport coveralls"
+                  gradleWrapper "jacocoTestReport"
                   publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -146,7 +149,7 @@ pipeline {
 
               post {
                 success {
-                  gradleWrapper "jacocoTestReport coveralls"
+                  gradleWrapper "jacocoTestReport"
                   publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
