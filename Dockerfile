@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-buster
+FROM openjdk:8-jdk-stretch
 ARG RUST_VERSION=1.50.0
 ARG UVM_VERSION=2.2.0
 
