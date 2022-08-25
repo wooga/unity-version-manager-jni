@@ -1,3 +1,7 @@
+import com.wooga.gradle.PlatformUtils
+import wooga.gradle.rust.tasks.AbstractRustCompile
+import wooga.gradle.rust.tasks.RustCompile
+
 /*
  * Copyright 2018 Wooga GmbH
  *
@@ -17,19 +21,71 @@
 
 plugins {
     id 'base'
-    id "net.wooga.rust.lib" version "0.3.0-rc.1"
+    id "net.wooga.rust.lib" version "0.4.2"
+    id "net.wooga.rustup" version "0.1.0"
+}
+
+def rustTargets = ["x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+rustup {
+    cargoHome.set(project.layout.buildDirectory.dir('cargo'))
+    rustupHome.set(project.layout.buildDirectory.dir('rustup'))
+
+    defaultToolchain = "stable"
+    update = true
+    profile = "minimal"
+
+    if (PlatformUtils.isMac()) {
+        targets = rustTargets.findAll { it.contains("apple") }
+    }
+    if (PlatformUtils.isLinux()) {
+        targets = rustTargets.findAll { it.contains("linux") }
+    }
+    if (PlatformUtils.isWindows()) {
+        targets = rustTargets.findAll { it.contains("windows") }
+    }
 }
 
 rust {
     useLocalInstallation(provider({
-        System.getProperty("os.name").toLowerCase().contains("windows")
+        true
     }))
-    version.set("1.59.0")
+
+    rustupHome(rustup.rustupHome)
+    cargoHome(rustup.cargoHome)
     patchCargoVersion(true)
 }
 
 compileLibRust {
+    dependsOn(rustup)
     release(true)
+}
+
+task compileMacOsAarch64(type: RustCompile) {
+    dependsOn(rustup)
+    compileType = AbstractRustCompile.CompileType.LIB
+    target = "aarch64-apple-darwin"
+    release(true)
+}
+
+task compileMacOsx86(type: RustCompile) {
+    dependsOn(rustup)
+    compileType = AbstractRustCompile.CompileType.LIB
+    target = "x86_64-apple-darwin"
+    release(true)
+}
+
+task generateUniversalBinary(type: Exec) {
+    inputs.files(
+            compileMacOsAarch64.getOutputDir().map({ it.file("libuvm_jni.dylib") }),
+            compileMacOsx86.getOutputDir().map({ it.file("libuvm_jni.dylib") }),
+    )
+
+    outputs.file("${buildDir}/output/libuvm_jni.dylib")
+
+    dependsOn compileMacOsAarch64, compileMacOsx86
+    executable = "lipo"
+    args "-create", "-output", outputs.files.singleFile
+    args inputs.files
 }
 
 configurations {
@@ -40,16 +96,27 @@ task copyOut(type: Copy) {
     dependsOn compileLibRust
 
     from file("${buildDir}/rust-project/target/release/")
-    include "*.dylib"
     include "*.dll"
     include "*.so"
     into file("${buildDir}/output")
 }
 
+task assembleLibraryFiles {
+    outputs.dir("${buildDir}/outputs")
+    if(PlatformUtils.isMac()) {
+        dependsOn generateUniversalBinary
+    } else {
+        dependsOn copyOut
+    }
+}
+
+
 configurations['default'].extendsFrom(configurations.rustLib)
 
 artifacts {
-    rustLib file: file("${buildDir}/output/libuvm_jni.dylib"), name: "libuvm_extern", type: "dylib", builtBy: copyOut
-    rustLib file: file("${buildDir}/output/libuvm_jni.so"), name: "libuvm_extern", type: "so", builtBy: copyOut
-    rustLib file: file("${buildDir}/output/uvm_jni.dll"), name: "libuvm_extern", type: "dll", builtBy: copyOut
+    rustLib file: file("${buildDir}/output/libuvm_jni.dylib"), name: "libuvm_extern", type: "dylib", builtBy: assembleLibraryFiles
+    rustLib file: file("${buildDir}/output/libuvm_jni.so"), name: "libuvm_extern", type: "so", builtBy: assembleLibraryFiles
+    rustLib file: file("${buildDir}/output/uvm_jni.dll"), name: "libuvm_extern", type: "dll", builtBy: assembleLibraryFiles
 }
+
+assemble.dependsOn assembleLibraryFiles
