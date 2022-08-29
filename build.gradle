@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-
+import com.wooga.gradle.PlatformUtils
 plugins {
     id 'java-library'
     id 'groovy'
@@ -172,4 +172,18 @@ afterEvaluate {
     tasks.publishToSonatype.mustRunAfter(tasks.postRelease)
     tasks.closeSonatypeStagingRepository.mustRunAfter(tasks.publishToSonatype)
     tasks.publish.mustRunAfter(tasks.release)
+
+    println("check if running with rosseta2")
+    if(PlatformUtils.isMac()) {
+        def out = new ByteArrayOutputStream()
+        project.exec {
+            executable 'sysctl'
+            args '-n', '-i', 'sysctl.proc_translated'
+
+            //store the output instead of printing to the console:
+            standardOutput = out
+        }
+
+        println("runs on rosseta: ${out.toString().trim()}")
+    }
 }
