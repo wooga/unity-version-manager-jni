@@ -49,7 +49,27 @@ public class UnityVersionManager {
      * @param projectPath the path to the unity project root
      * @return a version string or {@code NULL}
      */
-    public static native String detectProjectVersion(File projectPath);
+    public static String detectProjectVersion(File projectPath) {
+        return detectProjectVersion(projectPath, false);
+    }
+
+    /**
+     * Detects the unity editor version used in {@code projectPath}.
+     * <p>
+     * The second {@code Boolean} parameter {@code withRevision} controls the format of the version string.
+     * When set to {@code true} the returned version will be based on the <b>m_EditorVersionWithRevision</b> parameter
+     * in the <b>ProjectVersion.txt</b> file. e.g. <i>2020.3.38f1 (8f5fde82e2dc)</i>
+     * <p>
+     * Note:
+     * If the project is saved in an older format without the <b>m_EditorVersionWithRevision</b> parameter, then the
+     * <b>m_EditorVersion</b> parameter will be used which contains only the base version. Even if the <b>m_EditorVersion</b>
+     * is used the version could be returned with a release hash. But only if the version is known to uvm.
+     *
+     * @param projectPath the path to the unity project root
+     * @param withRevisionHash return the version with the release revision hash
+     * @return a version string or {@code NULL}
+     */
+    public static native String detectProjectVersion(File projectPath, boolean withRevisionHash);
 
     /**
      * Returns the path to the installation location for the provided version or {@code Null}.

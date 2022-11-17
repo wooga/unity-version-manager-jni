@@ -69,14 +69,17 @@ class UnityVersionManagerSpec extends Specification {
         noExceptionThrown()
     }
 
-    File mockUnityProject(String editorVersion) {
+    File mockUnityProject(String editorVersion, String revisionHash = "") {
         def outerDir = File.createTempDir("uvm_jni_projects_", "_base_path")
         def projectDir = new File(outerDir, "unity_testproject")
         def projectSettings = new File(projectDir, "ProjectSettings")
         projectSettings.mkdirs()
 
         def projectVersion = new File(projectSettings, "ProjectVersion.txt")
-        projectVersion << "m_EditorVersion: ${editorVersion}"
+        projectVersion << "m_EditorVersion: ${editorVersion}${System.lineSeparator()}"
+        if (!revisionHash.empty) {
+            projectVersion << "m_EditorVersionWithRevision: ${editorVersion} (${revisionHash})${System.lineSeparator()}"
+        }
         projectDir
     }
 
@@ -95,7 +98,26 @@ class UnityVersionManagerSpec extends Specification {
         resultMessage = expectedResult ? "the editor version" : "null"
     }
 
+    @Unroll
+    def "detectProjectVersion with revsion hash returns #resultMessage when #reason"() {
+        expect:
+        UnityVersionManager.detectProjectVersion(path, true) == expectedResult
+
+        where:
+        path                                                      | reason                                                                | expectedResult
+        null                                                      | "path is null"                                                        | null
+        File.createTempDir()                                      | "path points to an invalid location"                                  | null
+        mockUnityProject("2018.2b4", "123456789abc")              | "editor version is invalid"                                           | null
+        mockUnityProject("2018.2.1b4", "56789abc")                | "revision hash is invalid"                                            | "2018.2.1b4"
+        mockUnityProject("2018.2.1b4", "123456789abc")            | "path points to a unity project location with revision"               | "2018.2.1b4 (123456789abc)"
+        mockUnityProject("2017.1.2f3", "123456789abc").parentFile | "path points to a directory containing a unity project with revision" | "2017.1.2f3 (123456789abc)"
+        mockUnityProject("2018.2.1b4")                            | "path points to a unity project location"                             | "2018.2.1b4"
+        mockUnityProject("2017.1.2f3").parentFile                 | "path points to a directory containing a unity project"               | "2017.1.2f3"
+        resultMessage = expectedResult ? "the editor version" : "null"
+    }
+
     static String OS = System.getProperty("os.name").toLowerCase()
+
     static boolean isWindows() {
         return (OS.indexOf("win") >= 0)
     }
@@ -109,7 +131,7 @@ class UnityVersionManagerSpec extends Specification {
     }
 
     @Shared
-    @UnityInstallation(version="2018.4.19f1", basePath = "build/unity", cleanup = true)
+    @UnityInstallation(version = "2018.4.19f1", basePath = "build/unity", cleanup = true)
     Installation preInstalledUnity2018_4_19f1
 
     @Unroll
@@ -118,11 +140,11 @@ class UnityVersionManagerSpec extends Specification {
         UnityVersionManager.locateUnityInstallation(version) == expectedResult
 
         where:
-        version                          | reason                          | expectedResult
-        null                             | "version is null"               | null
-        preInstalledUnity2018_4_19f1.version                    | "when version is installed"     | preInstalledUnity2018_4_19f1
-        "1.1.1f1"                        | "when version is not installed" | null
-        "2018.0.1"                       | "when version is invalid"       | null
+        version                              | reason                          | expectedResult
+        null                                 | "version is null"               | null
+        preInstalledUnity2018_4_19f1.version | "when version is installed"     | preInstalledUnity2018_4_19f1
+        "1.1.1f1"                            | "when version is not installed" | null
+        "2018.0.1"                           | "when version is invalid"       | null
 
         resultMessage = expectedResult ? "the unity location" : "null"
     }
@@ -143,9 +165,9 @@ class UnityVersionManagerSpec extends Specification {
         }
     }
 
-    def "installUnityEditor installs unity to location"() {
+    @Unroll
+    def "installUnityEditor installs unity to location with version in format #format"() {
         given: "a version to install"
-        def version = "2019.3.0a5"
         assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
 
         and: "a temp install location"
@@ -160,15 +182,21 @@ class UnityVersionManagerSpec extends Specification {
         result != null
         result.location.exists()
         result.location.absolutePath == destination.absolutePath
-        result.version == version
+        result.version == baseVersion
         def installation = UnityVersionManager.locateUnityInstallation(version)
         installation.location.absolutePath == result.location.absolutePath
 
         cleanup:
         destination.deleteDir()
+
+        where:
+        version                     | format
+        "2019.3.0a5"                | "simple version string"
+        "2019.3.0a5 (9aff892fb75b)" | "version with hash"
+        baseVersion = version.split(/( |\/)/).first()
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @IgnoreIf({ env.containsKey("CI") })
     def "installUnityEditor installs unity to default location"() {
         given: "a version to install"
         def version = "2019.3.0a5"
@@ -223,7 +251,7 @@ class UnityVersionManagerSpec extends Specification {
         destination.deleteDir()
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @IgnoreIf({ env.containsKey("CI") })
     def "locks process when a different process is installing the same version"() {
         given: "a version to install"
         def version = "2019.3.0a5"
@@ -248,7 +276,7 @@ class UnityVersionManagerSpec extends Specification {
 
     }
 
-    @IgnoreIf({env.containsKey("CI")})
+    @IgnoreIf({ env.containsKey("CI") })
     def "installUnityEditor installs unity and components to default location"() {
 
 
