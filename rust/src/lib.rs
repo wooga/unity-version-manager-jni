@@ -1,13 +1,16 @@
-use flexi_logger::{default_format, Logger};
-use jni::objects::{JClass, JObject, JString, JValue};
-use jni::sys::{jint, jobject, jobjectArray, jsize, jstring};
-use jni::JNIEnv;
-use log::*;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Once;
+
+use flexi_logger::{default_format, Logger};
+use jni::JNIEnv;
+use jni::objects::{JClass, JObject, JString, JValue};
+use jni::sys::{jboolean, jint, jobject, jobjectArray, jsize, jstring};
+use log::*;
 use uvm_install2::unity::{Component, Version};
+
+use error::*;
 
 static START_LOGGER: Once = Once::new();
 
@@ -21,34 +24,51 @@ fn start_logger() {
 }
 
 mod error {
-    use error_chain::*;
-    use jni;
     use std;
+    use jni;
+    use thiserror::Error;
     use uvm_install2;
 
-    error_chain! {
-        types {
-            UvmJniError, UvmJniErrorKind, ResultExt, UvmJniResult;
-        }
+    #[derive(Error, Debug)]
+    pub enum UvmJniError {
+        #[error("installation error")]
+        InstallError {
+            #[from]
+            source: uvm_install2::error::Error,
+        },
 
-        links {
-            Another(jni::errors::Error, jni::errors::ErrorKind);
-            UvmCore(uvm_install2::uvm_core_error::UvmError, uvm_install2::uvm_core_error::UvmErrorKind);
-            UvmInstall(uvm_install2::error::Error, uvm_install2::error::ErrorKind);
-            UvmVersion(uvm_install2::unity::UvmVersionError, uvm_install2::unity::UvmVersionErrorKind);
-        }
+        #[error("invalid unity version")]
+        UnityVersionError {
+            #[from]
+            source: uvm_install2::unity::VersionError,
+        },
 
-        foreign_links {
-            Io(std::io::Error);
-        }
+        #[error("JNI error")]
+        JNIError {
+            #[from]
+            source: jni::errors::Error,
+        },
+
+        #[error("io error")]
+        Io {
+            #[from]
+            source: std::io::Error,
+        },
+
+        #[error("unknown error")]
+        Other {
+            #[from]
+            source: uvm_install2::uvm_core_error::UvmError,
+        },
     }
+
+    pub type UvmJniResult<T> = std::result::Result<T, UvmJniError>;
 }
 
-use error::*;
-
 mod jni_utils {
-    use super::*;
     use uvm_install2::unity;
+    use std::error::Error;
+    use super::*;
 
     /// Converts a `java.io.File` `JObject` into a `PathBuf`
     pub fn get_path(env: &JNIEnv, path: JObject) -> error::UvmJniResult<PathBuf> {
@@ -159,16 +179,11 @@ mod jni_utils {
     }
 
     pub fn print_error_and_return_null(err: UvmJniError) -> jobject {
-        error!("error: {}", err);
+        eprintln!("error: {}", err);
 
-        for err in err.iter().skip(1) {
-            error!("caused by: {}", err);
+        if let Some(cause) = err.source() {
+            error!("caused by: {}", cause);
         }
-
-        if let Some(backtrace) = err.backtrace() {
-            error!("backtrace: {:?}", backtrace);
-        }
-        eprintln!("{}", err.description());
 
         JObject::null().into_inner()
     }
@@ -221,13 +236,25 @@ pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_detectProjectVersi
     env: JNIEnv,
     _class: JClass,
     path: JObject,
+    with_revision_hash: jboolean,
 ) -> jstring {
     start_logger();
     jni_utils::get_path(&env, path)
         .and_then(|path| {
             uvm_install2::dectect_project_version(&path, Some(true)).map_err(|e| e.into())
         })
-        .and_then(|version| env.new_string(version.to_string()).map_err(|e| e.into()))
+        .and_then(|version| {
+            let version = if with_revision_hash == 0 {
+                version.to_string()
+            } else {
+                if let Ok(hash) = version.version_hash() {
+                    format!("{} ({})", version, hash)
+                } else {
+                    version.to_string()
+                }
+            };
+            env.new_string(version).map_err(|e| e.into())
+        })
         .map(|s| s.into_inner())
         .unwrap_or_else(jni_utils::print_error_and_return_null)
 }

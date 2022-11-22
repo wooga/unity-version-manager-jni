@@ -6,10 +6,10 @@ edition = "2018"
 
 [dependencies]
 jni = "0.15.0"
-uvm-install2 = "0.5.0"
-error-chain = "0.12.2"
+uvm-install2 = "0.8.0"
 log = "0.4.8"
 flexi_logger = "0.15.1"
+thiserror = "1.0.37"
 
 [lib]
 crate-type = ["cdylib"]
