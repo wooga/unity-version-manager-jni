@@ -2175,9 +2175,9 @@ dependencies = [
 
 [[package]]
 name = "uvm-install2"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2385c752a39dd61d6a06172e4e28e60b7e169452155309f6cb43085d52813026"
+checksum = "aff3d92fed36c2407c69ff478babfcafdaac02c31ec57a0c7e7ac39f3be682a2"
 dependencies = [
  "console 0.9.2",
  "dirs-2",
@@ -2210,9 +2210,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_core"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fd55b13bee72f6500fa0a073516f218e92c40f97fd1f9d4779bd84134646c97"
+checksum = "002fa6c97307423dfb9c8e38bff6914aae37d387c981b03a9879ec5227fc482d"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
@@ -2246,9 +2246,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_install_core"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5546882dff16f175fb415982182c5dc3f9f87f96aacfb956bcd1073ad7f7828"
+checksum = "0e623bcf59b12ce1c74b6212339af4e964fba184a98633b8a23e80c6db1c433b"
 dependencies = [
  "cfg-if 1.0.0",
  "derive_deref",
@@ -2267,9 +2267,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_install_graph"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c20e14b75130ce590dc9842290dcdc0e3ac690b7c38cb22f473d26cdf6b3b71d"
+checksum = "0e4d00b3f2bdd17b53dd42677a5355d04f4e59f8f8831212ecee8b6089363e1c"
 dependencies = [
  "daggy",
  "fixedbitset",
