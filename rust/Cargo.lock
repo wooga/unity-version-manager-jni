@@ -2286,6 +2286,7 @@ dependencies = [
  "log 0.4.14",
  "thiserror",
  "uvm-install2",
+ "uvm_core",
 ]
 
 [[package]]

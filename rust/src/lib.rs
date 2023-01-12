@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Once;
@@ -8,7 +9,8 @@ use jni::JNIEnv;
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys::{jboolean, jint, jobject, jobjectArray, jsize, jstring};
 use log::*;
-use uvm_install2::unity::{Component, Version};
+use uvm_install2::unity::{Component};
+use uvm_install2::unity::{Manifest, Modules, Version};
 
 use error::*;
 
@@ -176,6 +178,19 @@ mod jni_utils {
         )?;
         let native_component = native_component.l()?;
         Ok(native_component)
+    }
+
+    pub fn get_components<I: IntoIterator<Item=Component>> (env: &JNIEnv, components: I) -> UvmJniResult<jobjectArray> {
+        let component_class = env.find_class("net/wooga/uvm/Component")?;
+        let components: Vec<Component> = components.into_iter().collect();
+
+        let output =
+            env.new_object_array(components.len() as jsize, component_class, JObject::null())?;
+        for (i, component) in components.into_iter().enumerate() {
+            let native_component = get_component(&env, component)?;
+            env.set_object_array_element(output, i as jsize, native_component)?;
+        }
+        return Ok(output);
     }
 
     pub fn print_error_and_return_null(err: UvmJniError) -> jobject {
@@ -445,17 +460,8 @@ fn get_installation_components(env: &JNIEnv, object: JObject) -> error::UvmJniRe
 
     let installation = uvm_install2::unity::Installation::new(path)?;
     let components = uvm_install2::unity::InstalledComponents::new(installation);
-    let components: Vec<Component> = components.collect();
-    let component_class = env.find_class("net/wooga/uvm/Component")?;
 
-    let output =
-        env.new_object_array(components.len() as jsize, component_class, JObject::null())?;
-    for (i, component) in components.iter().enumerate() {
-        let native_component = jni_utils::get_component(&env, *component)?;
-        env.set_object_array_element(output, i as jsize, native_component)?;
-    }
-
-    Ok(output)
+    jni_utils::get_components(env, components)
 }
 
 #[no_mangle]
@@ -505,4 +511,26 @@ pub extern "system" fn Java_net_wooga_uvm_Installation_getExecutable(
 ) -> jobject {
     start_logger();
     get_installation_executable(&env, object).unwrap_or_else(jni_utils::print_error_and_return_null)
+}
+
+fn list_unity_components(env: &JNIEnv, version: JString) -> error::UvmJniResult<jobjectArray> {
+    let version_string = env.get_string(version)?;
+    let version_string: String = version_string.into();
+    let version = Version::from_str(&version_string)?;
+    let manifest = Manifest::load(&version)
+        .map_err(|_e| io::Error::new(io::ErrorKind::NotFound, "failed to load manifest"))?;
+    let modules: Modules = manifest.into_modules();
+
+    let components = modules.iter().map(|m| m.id);
+    let java_components: jobjectArray = jni_utils::get_components(env, components)?;
+    Ok(java_components)
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "system" fn Java_net_wooga_uvm_UnityVersionManager_listAvailableComponents(env: JNIEnv, _class: JClass, version: JString) -> jobjectArray {
+    start_logger();
+    let res = list_unity_components(&env, version);
+
+    res.unwrap_or_else(jni_utils::print_error_and_return_null)
 }
