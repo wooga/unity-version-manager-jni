@@ -314,4 +314,16 @@ class UnityVersionManagerSpec extends Specification {
         then:
         result == installation.version
     }
+
+    @Unroll
+    def "return unity #version components for current platform"() {
+        expect:
+        def components = UnityVersionManager.listAvailableComponents(version)
+        components != null
+        components.size() > 0
+
+        where:
+        version << ["2019.4.31f1", "2019.4.1f1", "2020.1.1f1", "2021.1.1f1", "2022.1.1f1"]
+
+    }
 }

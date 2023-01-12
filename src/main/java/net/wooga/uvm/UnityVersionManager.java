@@ -127,6 +127,12 @@ public class UnityVersionManager {
      */
     public static native Installation installUnityEditor(String version, File destination, Component[] components);
 
+    /**
+     * List all available components for the given unity version in the current platform.
+     * @param version the version of unity to list components from
+     * @return a {@code Components[]} containing the requested components
+     */
+    public static native Component[] listAvailableComponents(String version);
 
     /**
      * Return the version as {@code String} of the unity installation at the provided location or {@code Null}.

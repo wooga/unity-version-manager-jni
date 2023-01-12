@@ -29,6 +29,9 @@ plugins {
 }
 
 group "net.wooga"
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.targetCompatibility = JavaVersion.VERSION_1_8
+
 
 List<String> cliTasks = project.rootProject.gradle.startParameter.taskNames
 if (cliTasks.contains("rc")) {
