@@ -1,4 +1,4 @@
-#Using older version of debian (stretch) to use older, and thus with wider compatibility range glibc
+#Using older version of debian (stretch) to use older glibc, and thus with wider compatibility range.
 FROM openjdk:8-jdk-stretch
 ARG RUST_VERSION=1.50.0
 ARG UVM_VERSION=2.2.0
