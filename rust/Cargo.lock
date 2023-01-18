@@ -2210,9 +2210,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_core"
-version = "0.13.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "002fa6c97307423dfb9c8e38bff6914aae37d387c981b03a9879ec5227fc482d"
+checksum = "4073d87d19d385c8804ffc27aa373d5e98b7d0e1427512637d74ab8d59ae0357"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
