@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 jni = "0.15.0"
-uvm-install2 = "0.9.1"
+uvm-install2 = "0.9.2"
 uvm_core = "0.13.2"
 log = "0.4.8"
 flexi_logger = "0.15.1"

@@ -10,6 +10,7 @@ ENV RUST_BACKTRACE=1
 ENV RUST_LOG="warning, uvm_core=trace, uvm_jni=trace"
 ENV IN_DOCKER="1"
 
+RUN echo "deb http://archive.debian.org/debian stretch main contrib non-free" > /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get install -y make build-essential libssl-dev pkg-config openssl p7zip-full cpio
 

@@ -2352,9 +2352,9 @@ dependencies = [
 
 [[package]]
 name = "uvm-install2"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72377c33d7a17cae4344e164c76b832af67e0aedec07fbad66e310f2b5c907e3"
+checksum = "c05e5097589b7f76bbfafc7e603e3af7f0f4c5302259e7750958415321248b0e"
 dependencies = [
  "console 0.9.2",
  "dirs-2",
@@ -2423,9 +2423,9 @@ dependencies = [
 
 [[package]]
 name = "uvm_install_core"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc91f91f6fe55dc393e31d308156702d5797af58d7d16c0b7e19486f833d1581"
+checksum = "88565a0b58c6e29ad5c98877eb1ae8e6d6623680d90d705686d9b1d57fa974b7"
 dependencies = [
  "cfg-if 1.0.0",
  "derive_deref",
