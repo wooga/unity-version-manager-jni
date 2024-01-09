@@ -303,6 +303,37 @@ class UnityVersionManagerSpec extends Specification {
         result.location.deleteDir()
     }
 
+    @IgnoreIf({ env.containsKey("CI") })
+    def "installUnityEditor installs unity and components to default location #syncedModules"() {
+        given: "a version to install"
+        def version = "2019.3.0a5"
+        assert !UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+
+        when:
+        def result = UnityVersionManager.installUnityEditor(version, [Component.android].toArray() as Component[], syncedModules)
+
+        then:
+        result != null
+        result.location.exists()
+        result.version == version
+        UnityVersionManager.listInstallations().collect({ it.version }).contains(version)
+        def playbackEngines = new File(result.location, "PlaybackEngines")
+        playbackEngines.exists()
+        new File(playbackEngines, "AndroidPlayer").exists()
+        new File(playbackEngines, "AndroidPlayer/NDK").exists() == syncedModules
+        new File(playbackEngines, "AndroidPlayer/SDK").exists() == syncedModules
+        new File(playbackEngines, "AndroidPlayer/OpenJDK").exists() == syncedModules
+        def installation = UnityVersionManager.locateUnityInstallation(version)
+        installation.location.absolutePath == result.location.absolutePath
+
+        cleanup:
+        result.location.deleteDir()
+
+        where:
+        syncedModules << [true, false]
+        messages = syncedModules ? "with synced modules" : "without synced modules"
+    }
+
     def "returns unity version at location"() {
         given: "a installation"
         def installation = preInstalledUnity2018_4_19f1
