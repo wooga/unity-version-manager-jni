@@ -113,7 +113,9 @@ pipeline {
 
         stage('linux') {
           agent {
-            dockerfile true
+            dockerfile {
+              args '-v /home/jenkins_agent/.gradle/init.d:/home/jenkins_agent/.gradle/init.d:ro'
+            }
           }
 
           stages {

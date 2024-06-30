@@ -26,3 +26,4 @@ RUN useradd -u ${USER_ID} -g ${GROUP_ID} --create-home jenkins_agent
 
 USER jenkins_agent
 RUN uvm install 2019.1.0a7 /home/jenkins_agent/.local/share/Unity-2019.1.0a7
+RUN mkdir /home/jenkins_agent/.gradle
