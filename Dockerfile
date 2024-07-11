@@ -22,7 +22,8 @@ RUN cd "unity-version-manager-$UVM_VERSION" && PATH="${HOME}/.cargo/bin:${PATH}"
 
 ARG USER_ID=1001
 ARG GROUP_ID=100
-RUN useradd -u ${USER_ID} -g ${GROUP_ID} --create-home ci
+RUN useradd -u ${USER_ID} -g ${GROUP_ID} --create-home jenkins_agent
 
-USER ci
-RUN uvm install 2019.1.0a7 /home/ci/.local/share/Unity-2019.1.0a7
+USER jenkins_agent
+RUN uvm install 2019.1.0a7 /home/jenkins_agent/.local/share/Unity-2019.1.0a7
+RUN mkdir /home/jenkins_agent/.gradle
