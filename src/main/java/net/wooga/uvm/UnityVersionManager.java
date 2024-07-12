@@ -111,7 +111,23 @@ public class UnityVersionManager {
      * @see Component
      * @see Installation
      */
-    public static native Installation installUnityEditor(String version, Component[] components);
+    public static Installation installUnityEditor(String version, Component[] components) {
+        return installUnityEditor(version, components, true);
+    }
+
+    /**
+     * Installs the given version of unity and additional components to default destination.
+     * <p>
+     * If the unity version and all requested components are already installed, returns early.
+     *
+     * @param version    the version of unity to install
+     * @param components a list of optional {@code Component}s to install
+     * @param syncChildComponents should child components automatically be installed (e.g. Andoid SDK/NDK)
+     * @return a {@code Installation} object or null
+     * @see Component
+     * @see Installation
+     */
+    public static native Installation installUnityEditor(String version, Component[] components, boolean syncChildComponents);
 
     /**
      * Installs the given version of unity and additional components to destination.
@@ -125,7 +141,24 @@ public class UnityVersionManager {
      * @see Component
      * @see Installation
      */
-    public static native Installation installUnityEditor(String version, File destination, Component[] components);
+    public static Installation installUnityEditor(String version, File destination, Component[] components) {
+        return installUnityEditor(version, destination, components, true);
+    }
+
+    /**
+     * Installs the given version of unity and additional components to destination.
+     * <p>
+     * If the unity version and all requested components are already installed, returns early.
+     *
+     * @param version     the version of unity to install
+     * @param destination the location to install unity to
+     * @param components  a list of optional {@code Component}s to install
+     * @param syncChildComponents should child components automatically be installed (e.g. Andoid SDK/NDK)
+     * @return a {@code Installation} object or null
+     * @see Component
+     * @see Installation
+     */
+    public static native Installation installUnityEditor(String version, File destination, Component[] components, boolean syncChildComponents);
 
     /**
      * List all available components for the given unity version in the current platform.
