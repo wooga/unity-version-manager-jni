@@ -195,25 +195,25 @@ pipeline {
               }
             }
 
-            stage('check') {
-              when {
-                beforeAgent true
-                expression {
-                  return params.RELEASE_TYPE == "SNAPSHOT" && !params.SKIP_CHECK
-                }
-              }
-
-              steps {
-                echo "skip"
-                //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
-              }
-
-              post {
-                cleanup {
-                  cleanWs()
-                }
-              }
-            }
+//            stage('check') {
+//              when {
+//                beforeAgent true
+//                expression {
+//                  return (params.RELEASE_TYPE == "SNAPSHOT" && !params.SKIP_CHECK )|| false
+//                }
+//              }
+//
+//              steps {
+//                echo "skip"
+//                //gradleWrapper "check -Prelease.stage=${params.RELEASE_TYPE.trim()} ${params.RELEASE_SCOPE ? '-Prelease.scope=' + params.RELEASE_SCOPE : ''}"
+//              }
+//
+//              post {
+//                cleanup {
+//                  cleanWs()
+//                }
+//              }
+//            }
           }
         }
       }
